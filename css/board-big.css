@@ -1,0 +1,110 @@
+/*
+ * Board Dimensions (also used by the coordinates)
+ * This dimensions must be the ones of the board images, also the coordinates must
+ * have the same height, or width, depending of on the top or on the sides.
+ **/
+.eidogo-player .size7 {
+  width: 256px;
+  height: 256px;
+}
+
+.eidogo-player .size9 {
+  width: 324px;
+  height: 324px;
+}
+
+.eidogo-player .size13 {
+  width: 460px;
+  height: 460px;
+}
+
+.eidogo-player .size19 {
+  width: 664px;
+  height: 664px;
+}
+
+/** Board Images **/
+.eidogo-player .board.size7 {
+  background: #888 url(../player/images/board/big/board-7.gif);
+}
+.eidogo-player .board.size9 {
+  background: #888 url(../player/images/board/big/board-9.gif);
+}
+.eidogo-player .board.size13 {
+  background: #888 url(../player/images/board/big/board-13.gif);
+}
+.eidogo-player .board.size19 {
+  background: #E8C473 url(../player/images/board/big/board-19.gif);
+}
+
+/** Stone (point) **/
+.eidogo-player .point.stone.black {
+  background: url(../player/images/board/big/b.png);
+}
+.eidogo-player .point.stone.white {
+  background: url(../player/images/board/big/w.png);
+}
+/* This must be the dimensions of the avobe images. */
+.eidogo-player .point {
+  width: 34px;
+  height: 34px;
+}
+
+/** Coordinates **/
+.eidogo-player .board-container .coords.top {
+  background: url("../player/images/board/big/board-bg-coords-x.png") no-repeat scroll 0px 0px;
+  height: 35px;
+  margin-left: 35px;
+}
+
+.eidogo-player .coords.sides {
+  background: url("../player/images/board/big/board-bg-coords-y.png") no-repeat scroll 0px 0px;
+  width: 35px;
+  float: left;
+}
+
+.eidogo-player .board-container .coords.bottom {
+  background: url("../player/images/board/big/board-bg-coords-x.png") no-repeat scroll 0px 0px;
+  height: 35px;
+  margin-left: 35px;
+}
+
+.eidogo-player .board-container .coords.sides.size13 {
+  background-position: 0 -204px;
+}
+
+.eidogo-player .board-container .coords.sides.size9 {
+  background-position: 0 -340px;
+}
+
+.eidogo-player .board-container .coords.sides.size7 {
+  background-position: 0 -408px;
+}
+
+/** Markers **/
+.eidogo-player .board .point.marker {
+  width: 34px;
+  height: 34px;
+  background: url(../player/images/board/big/markers.gif) no-repeat top left;
+}
+.eidogo-player .board .point.marker.current {
+  background-position: 0 -142px;
+}
+.eidogo-player .board .point.marker.triangle {
+  background-position: 0 -581px;
+}
+.eidogo-player .board .point.marker.square {
+  background-position: 0 -316px;
+}
+.eidogo-player .board .point.marker.circle {
+  background-position: 0 -53px;
+}
+.eidogo-player .board .point.marker.ex {
+  background-position: 0 -229px;
+}
+.eidogo-player .board .point.marker.territory-white {
+    background-position: 0 -492px;
+}
+.eidogo-player .board .point.marker.territory-black {
+    background-position: 0 -404px;
+}

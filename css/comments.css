@@ -1,0 +1,151 @@
+#comments-container.comments-container {
+  height: 323px;
+  position: relative;
+  padding-top: 5px;
+}
+
+#comments-container .default-text {
+  color: #404040;
+}
+
+#comments-container .tabs-container {
+ height: 20px;
+ float: left;
+}
+
+#comments-container .tabs-container li {
+  border: 1px solid black;
+  cursor: pointer;
+  float: left;
+  height: 19px;
+  margin-left: 2px;
+  padding: 2px 6px;
+  background-color: #BBBBAA;
+}
+
+#comments-container .tabs-container li.selected {
+  background-color: #999988;
+}
+
+#comments-container label.disabled-comments {
+  float: left;
+  color: white;
+  margin-top: 3px;
+  margin-left: 7px;
+
+  display: block;
+  padding-left: 15px;
+  text-indent: -15px;
+}
+#comments-container label.disabled-comments input {
+  width: 13px;
+  height: 13px;
+  vertical-align: bottom;
+  position: relative;
+  top: 0;
+  *overflow: hidden;
+}
+
+#comments-container .content {
+  width: 96%;
+  bottom: 0;
+  clear: both;
+  height: auto;
+  overflow: auto;
+  position: absolute;
+  top: 25px;
+  padding: 4px;
+  background-color: #BBBBAA;
+  border: 4px solid #999988;
+}
+
+#comments-container .content .comment {
+  margin-bottom: 15px;
+}
+
+#comments-container .content .comment .info {
+  display: block;
+  color: black;
+  background-color: inherit;
+  font-weight: bold;
+  float: none;
+  font-size: inherit;
+  margin: 0;
+  padding: 0;
+  width: auto;
+}
+
+#comments-container .content .comment .info .left {
+  float: left;
+}
+
+#comments-container .content .comment .info .right {
+  float: right;
+}
+
+#comments-container .content .comment .info .entered {
+  margin-left: 10px;
+  margin-right: 8px;
+  margin-bottom: 0;
+}
+
+#comments-container .content .comment .entered.question {
+  background-color: #28a1af;
+}
+
+#comments-container .content .comment .entered.correct {
+  background-color: #7fc876;
+}
+
+#comments-container .content .comment .entered.wrong {
+  background-color: #c8856e;
+}
+
+#comments-container .content .comment .text {
+  clear: both;
+}
+
+
+#comments-container .content .comment .text.not-alive {
+  background-color: yellow;
+}
+
+/* Add comments */
+#comments-container .content .add-comment {
+  margin-left: 3px;
+  margin-top: 7px;
+}
+
+#comments-container .content .add-comment span {
+  display: block;
+  font-weight: bold;
+  margin-left: 3px;
+}
+
+#comments-container .content .add-comment textarea {
+  height: 64px;
+  width: 98%;
+  margin-top: 5px;
+}
+
+#comments-container .content .add-comment div {
+  position: relative;
+    margin-left: 3px;
+  margin-top: 5px;
+}
+
+#comments-container .content .add-comment div input {
+  margin-left: 6px;
+  padding: 1px;
+  cursor: pointer;
+}
+
+#comments-container .content .add-comment div .loading-image {
+  position: absolute;
+  top: 3px;
+  left: 148px;
+  background: url("../images/small-loader.gif") no-repeat scroll 0 0 transparent;
+  height: 16px;
+  width: 16px;
+  margin: 0;
+}

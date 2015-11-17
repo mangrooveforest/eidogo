@@ -248,8 +248,8 @@ eidogo.util = {
             elY = rect.top + Math.max(doc.documentElement.scrollTop, doc.body.scrollTop);
         } else {
             while (node) {
-                elX += node.offsetLeft;
-                elY += node.offsetTop;
+                elX += $(node).offset().left;
+                elY += $(node).offset().top;
                 node = node.offsetParent ? node.offsetParent : null;
             }
             while (!noScroll && parent && parent.tagName && !/^body|html$/i.test(parent.tagName)) {
@@ -299,8 +299,7 @@ eidogo.util = {
         var count = 0;
         for (var i in obj) count++;
         return count;
-    }
-    
+    }   
 };
 
 })();

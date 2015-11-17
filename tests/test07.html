@@ -1,0 +1,85 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Go Problems</title>
+
+    <!-- International support -->
+    <!-- <script type="text/javascript" src="../player/i18n/XXX.js"></script>
+    
+    <script type="text/javascript" src="../player/js/all.compressed.js"></script> -->
+
+    <script type="text/javascript" src="../js/jquery-1.7.1.js"></script>
+    <script type="text/javascript" src="../js/raphael.js"></script>
+
+    <!-- Uncomment the following to work with the original source. -->
+    <script type="text/javascript" src="../player/js/lang.js"></script>
+    <script type="text/javascript" src="../player/js/eidogo.js"></script>
+    <script type="text/javascript" src="../player/js/util.js"></script>
+    <script type="text/javascript" src="../player/i18n/en.js"></script>
+    <script type="text/javascript" src="../player/js/gametree.js"></script>
+    <script type="text/javascript" src="../player/js/sgf.js"></script>
+    <script type="text/javascript" src="../player/js/board.js"></script>
+    <script type="text/javascript" src="../player/js/boardRaphael.js"></script>
+    <script type="text/javascript" src="../player/js/navTree/raphaelNavTree.js"></script>
+    <script type="text/javascript" src="../player/js/rules.js"></script>
+    <script type="text/javascript" src="../player/js/player.js"></script>
+    <script type="text/javascript" src="../player/js/init.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/3.3.0/build/cssreset/reset-min.css">
+    <link href="../css/goproblems.css" rel="stylesheet" type="text/css">
+    <link href="../css/comments.css" rel="stylesheet" type="text/css">
+    <link href="../css/board-big.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+	
+    <div id="player-container" style="display:none;">(;AB[bm]AB[bl]AB[bk]AB[cj]AB[di]AB[dh]AB[dg]AB[cf]AB[bf]AW[ce]AW[df]AW[cg]AW[bh]AW[bd]AW[de]AW[eg]AW[eh]AW[ei]AW[ej]AW[dk]AW[ck]AW[cl]AW[cm]AW[bn]AW[am]AW[bo]C[Any hope here?]AW[ad]AP[goproblems]
+(;B[bi]
+(;W[bg]
+(;B[ah];W[af]
+(;B[ch];W[be];B[dj]C[RIGHT])
+(;B[dj];W[ch]MA[al]MA[aj])
+(;B[aj];W[dj]MA[al]MA[ci])
+(;B[al];W[dj]MA[ci]MA[aj]))
+(;B[ag];W[be]
+(;B[ch];W[af]
+(;B[dj]C[RIGHT])
+(;B[aj];W[dj]MA[al]MA[ci])
+(;B[ai];W[dj])
+(;B[al];W[aj]MA[bj]MA[dj]))
+(;B[aj];W[dj]MA[al]MA[ci])
+(;B[ai];W[af]MA[ch]MA[dj])
+(;B[dj];W[ch]MA[aj]MA[al])
+(;B[al];W[dj]MA[aj]MA[ci]))
+(;B[ch];W[dj]MA[aj]MA[al]LB[ci:1]LB[af:2])
+(;B[dj];W[ch]MA[aj]MA[al])
+(;B[aj];W[dj]MA[ci]MA[al])
+(;B[al];W[dj]MA[ci]MA[aj])
+(;B[af];W[dj];B[ci];W[al]LB[aj:1]LB[be:2]))
+(;W[dj];B[bg]C[RIGHT])
+(;W[ch];B[bg]C[RIGHT]))
+(;B[bg];W[bi];B[bj];W[be]
+(;B[ch];W[af]
+(;B[ag];W[ah]C[ko])
+(;B[ah];W[ai]))
+(;B[ah];W[af];B[ch];W[ai])
+(;B[ai];W[af];B[ch];W[ag]))
+(;B[ch];W[bi]MA[bg]MA[bj]))</div>
+
+  <script type="text/javascript" src="../js/goproblems.js"></script>
+  <script type="text/javascript" src="../js/comments.js"></script>
+  <script>
+    $(function() {
+      player = new go.problems.Player("player-container",
+          {
+            dbId : 1,
+            userId : 1,
+            commentsURL : "util/jsoncomments.php?",
+            postCommentsURL : "util/addcomment.php",
+            stoneSize : 35,
+            debugMode : true,
+            seenbefore : false
+          });
+    });
+  </script>
+</body>
+</html>

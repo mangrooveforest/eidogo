@@ -1,0 +1,76 @@
+#time-trial-container.time-trial-container {
+  height: 323px;
+  width: 300px;
+  position: relative;
+  padding-top: 5px;
+  margin-right: 10px;
+}
+
+  #time-trial-container.time-trial-container h3 {
+    width: 100%;
+    padding: 5px 0 0 0;
+    background: #466;
+    color: #8aa;
+    font-size: 150%;
+    line-height: 150%;
+    text-align: center;
+  }
+
+  #time-trial-container.time-trial-container .container {
+    font-size: 13px;
+    margin-top: 5px;
+    padding: 15px 8px 40px 8px;
+    background: #bba;
+    border-left: 3px solid #998;
+    border-top: 2px solid #998;
+  }
+
+  #time-trial-container.time-trial-container .lives-container .lives-left {
+    margin-top: 10px;
+  }
+
+    #time-trial-container.time-trial-container .lives-container .lives-left .live {
+      float: left;
+      width: 25px;
+      height: 25px;
+      background: url("../images/timeTrial/live.png") no-repeat transparent;
+      margin-left: 20px;
+    }
+
+  #time-trial-container.time-trial-container .timer {
+    font-family: 'Aldrich', monospace;
+    text-align: left;
+    margin-top: 30px;
+    font-size: 325%;
+    margin-left: 33%;
+  }
+    #time-trial-container.time-trial-container .timer.blink {
+      color: red;
+    }
+
+  #time-trial-container.time-trial-container .result-message {
+    height: 30px;
+    margin-top: 25px;
+  }
+
+    #time-trial-container.time-trial-container .result-message > div {
+      display: none;
+    }
+
+    #time-trial-container.time-trial-container .result-message .game-over {
+      text-align: center;
+      font-size: 182%;
+      text-transform: capitalize;
+    }
+
+    #time-trial-container.time-trial-container .result-message .success {
+      text-align: center;
+      width: 117px;
+      margin: auto;
+      font-size: 120%;
+      background: #afa;
+      padding: 7px;
+      border-radius: 14px;
+      color: #000;
+      border: 1px solid #44AA44;
+    }

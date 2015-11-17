@@ -1,0 +1,83 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Go Problems - Problem 8</title>
+
+    <!-- International support -->
+    <!-- <script type="text/javascript" src="../player/i18n/XXX.js"></script>
+    
+    <script type="text/javascript" src="../player/js/all.compressed.js"></script> -->
+
+    <script type="text/javascript" src="../js/jquery-1.7.1.js"></script>
+    <script type="text/javascript" src="../js/raphael.js"></script>
+
+    <!-- Uncomment the following to work with the original source. -->
+    <script type="text/javascript" src="../player/js/lang.js"></script>
+    <script type="text/javascript" src="../player/js/eidogo.js"></script>
+    <script type="text/javascript" src="../player/js/util.js"></script>
+    <script type="text/javascript" src="../player/i18n/en.js"></script>
+    <script type="text/javascript" src="../player/js/gametree.js"></script>
+    <script type="text/javascript" src="../player/js/sgf.js"></script>
+    <script type="text/javascript" src="../player/js/board.js"></script>
+    <script type="text/javascript" src="../player/js/boardRaphael.js"></script>
+    <script type="text/javascript" src="../player/js/navTree/raphaelNavTree.js"></script>
+    <script type="text/javascript" src="../player/js/rules.js"></script>
+    <script type="text/javascript" src="../player/js/player.js"></script>
+    <script type="text/javascript" src="../player/js/init.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/3.3.0/build/cssreset/reset-min.css">
+    <link href="../css/goproblems.css" rel="stylesheet" type="text/css">
+    <link href="../css/comments.css" rel="stylesheet" type="text/css">
+    <link href="../css/board-big.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+	
+    <div id="player-container" style="display:none;">(;GM[1]FF[4]CA[UTF-8]AP[CGoban:2]ST[2]
+RU[Japanese]SZ[19]KM[0.00]TM[]
+DT[1999-07-28]SY[Cgoban 1.9.2]
+AW[hh][lh][hi][ji][li][lj]CR[hh]TR[lh]SQ[ji]MA[li]AB[kg][lg][mg][mh][mi][mj][kk][lk][mk]CR[hh]TR[kg]SQ[lg]MA[mh]C[Black to play and catch the three stones.
+]
+(;B[ki]
+(;W[kh]
+(;B[jh]
+;W[kj]
+;B[jj]
+;W[ki]
+;B[ii]C[RIGHT
+CHOICE])
+(;B[kj]
+;W[jh]))
+(;W[kj]CR[kj]
+(;B[kh]CR[kh]
+;W[jj]CR[jj])
+(;B[jj]CR[jj]
+;W[kh]CR[kh]
+;B[jh]CR[jh]
+;W[ki]CR[ki]
+;B[ii]CR[ii]C[RIGHT
+CHOICE])))
+(;B[jh]
+;W[jj])
+(;B[jj]
+;W[jh])
+(;B[ii]
+;W[jj]))</div>
+
+  <script type="text/javascript" src="../js/goproblems.js"></script>
+  <script type="text/javascript" src="../js/comments.js"></script>
+  <script>
+    $(function() {
+      player = new go.problems.Player("player-container",
+          {
+            dbId : 1,
+            userId : 1,
+            commentsURL : "util/jsoncomments.php?",
+            postCommentsURL : "util/addcomment.php",
+            stoneSize : 35,
+            debugMode : true,
+            seenbefore : false
+          });
+    });
+  </script>
+</body>
+</html>

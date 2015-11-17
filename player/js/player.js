@@ -6,7 +6,6 @@
  *
  * This file contains the meat of EidoGo.
  */
-
 (function() {
 
 // shortcuts (local only to this file)
@@ -42,7 +41,17 @@ eidogo.Player = function() {
     this.init.apply(this, arguments);
 }
 eidogo.Player.prototype = {
-    
+
+    /**
+     * The nav tree renderer.
+     */
+    navTree: null,
+
+    /**
+     * The leaf that next on the keyboard navigation.
+     */
+    _targetLeaf: null,
+
     /**
      * Inits settings that are persistent among games
      * @constructor
@@ -51,12 +60,15 @@ eidogo.Player.prototype = {
     init: function(cfg) {
     
         cfg = cfg || {};
-        
+
+        this.stoneSize = cfg.stoneSize;
+
         // play, add_b, add_w, region, tr, sq, cr, label, number, score(?)
         this.mode = cfg.mode ? cfg.mode : "play";
     
         // for references to all our DOM objects -- see constructDom()
         this.dom = {};
+
         this.dom.container = (typeof cfg.container == "string" ?
             byId(cfg.container) : cfg.container);
     
@@ -64,7 +76,7 @@ eidogo.Player.prototype = {
             alert(t['dom error']);
             return;
         }
-    
+
         // unique id, so we can have more than one player on a page
         this.uniq = (new Date()).getTime();
         
@@ -184,11 +196,12 @@ eidogo.Player.prototype = {
         this.reset(cfg);
         
         // custom renderer?
-        this.renderer = cfg.renderer || "html";
+        this.renderer = cfg.renderer || "raphael";
         
         // crop settings
         this.cropParams = null;
         this.shrinkToFit = cfg.shrinkToFit;
+        this.shrinkBoard = cfg.shrinkBoard;
         if (this.shrinkToFit || cfg.cropWidth || cfg.cropHeight) {
             this.cropParams = {};
             this.cropParams.width = cfg.cropWidth;
@@ -197,10 +210,19 @@ eidogo.Player.prototype = {
             this.cropParams.top = cfg.cropTop;
             this.cropParams.padding = cfg.cropPadding || 1;
         }
-        
         // set up the elements we'll use
         this.constructDom();
-        
+
+        this.navTree = new eidogo.RaphaelNavTree(this.dom.navTreeContainer,
+            this.cursor,
+            {
+              beforeShowNavTreeCurrent: this.hooks["beforeShowNavTreeCurrent"],
+              onClick: $.proxy(this.onNavTreeClick, this),
+              onTargetLeafChange: $.proxy(this.onTargetLeafChange, this)
+            },{
+              showIsoLines: cfg.showIsoLines
+            });
+
         // player-wide events
         if (cfg.enableShortcuts) {
             addEvent(document, isMoz ? "keypress" : "keydown", this.handleKeypress, this, true);
@@ -210,7 +232,7 @@ eidogo.Player.prototype = {
         if (cfg.sgf || cfg.sgfUrl || (cfg.sgfPath && cfg.gameName)) {
             this.loadSgf(cfg);
         }
-        
+
         this.hook("initDone");
     },
     
@@ -280,10 +302,12 @@ eidogo.Player.prototype = {
         // so we know when permalinks and downloads are unreliable
         this.unsavedChanges = false;
         
-        // to know when to update the nav tree
-        this.updatedNavTree = false;
-        this.navTreeTimeout = null;
-        
+        // update the nav tree, if present.
+        if (this.navTree) {
+          this.navTree.updateNavTree();
+          this.navTree.setCursor(this.cursor);
+        }
+
         // whether we're currently searching or editing
         this.searching = false;
         this.editingText = false;
@@ -291,6 +315,7 @@ eidogo.Player.prototype = {
         
         // problem-solving mode: respond when the user plays a move
         this.problemMode = cfg.problemMode;
+        this.showProblemComments = cfg.showProblemComments;
         this.problemColor = cfg.problemColor;
     
         // user-changeable preferences
@@ -427,6 +452,7 @@ eidogo.Player.prototype = {
         if (!noCb && typeof completeFn == "function") {
             completeFn();
         }
+        this.navTree.updateNavTree();
     },
     
     /**
@@ -440,7 +466,14 @@ eidogo.Player.prototype = {
             target = new eidogo.GameNode();
             this.collectionRoot = target;
         }
+        //As the first node is not the game itself, it is the previous to the
+        // root. The root has depth 0. Matias Niklison.
+        target.depth.x = -1;
+        target.depth.y = -1;
         target.loadJson(data);
+
+        this.hook("afterGameParse", {rootNode : target});
+
         target._cached = true;
         this.doneLoading();
         this.progressiveLoads--;
@@ -448,6 +481,11 @@ eidogo.Player.prototype = {
             // Loading into tree root; use the first game by default or
             // other if specified
             var gameIndex = this.loadPath.length ? parseInt(this.loadPath[0], 10) : 0;
+
+            // load the problem color!
+            var rootCursor = new eidogo.GameCursor(target._children[gameIndex]);
+            this.problemColor = rootCursor.getNextColor();
+
             this.initGame(target._children[gameIndex || 0]);
             newGame = true;
         }
@@ -468,6 +506,9 @@ eidogo.Player.prototype = {
             else
                 this.currentColor = this.problemColor;
         }
+
+        // Looks for isos
+        this.cursor.lookForIsosFromRoot();
     },
 
     /**
@@ -514,12 +555,12 @@ eidogo.Player.prototype = {
             } else {
                 this.croak(t['invalid data']);
             }
-        }
-    
+        };
+
         var failure = function(req) {
             this.croak(t['error retrieving']);
-        }
-        
+        };
+
         ajax('get', url, null, success, failure, this, 30000);
     },
 
@@ -531,22 +572,11 @@ eidogo.Player.prototype = {
         gameRoot = gameRoot || {};
         this.handleDisplayPrefs();
         var size = gameRoot.SZ || 19;
-        // Only three sizes supported for now
-        if (size != 7 && size != 9 && size != 13 && size != 19)
-            size = 19;
         if (this.shrinkToFit)
             this.calcShrinkToFit(gameRoot, size);
-        else if (this.problemMode && !this.cropParams) {
-            this.cropParams = {
-                width: size,
-                height: size,
-                top: 0,
-                left: 0,
-                padding: 1};
-        }
         if (!this.board) {
             // first time
-            this.createBoard(size);
+            this.createBoard(size, this.stoneSize);
             this.rules = new eidogo.Rules(this.board);
         }
         this.unsavedChanges = false;
@@ -573,25 +603,35 @@ eidogo.Player.prototype = {
             (this.prefs.showComments ? show : hide)(this.dom.comments);
         }
         (this.prefs.showOptions ? show : hide)(this.dom.options);
-        (this.prefs.showNavTree ? show : hide)(this.dom.navTreeContainer);
+        if (this.prefs.showNavTree) {
+          this.navTree.show();
+        } else {
+          this.navTree.hide();
+        }
     },
 
     /**
      * Create our board. This can be called multiple times.
-    **/
-    createBoard: function(size) {
+     * @param size {Number} Board size. Default: 19.
+     * @param stoneSize {Number} Stone size, in pixels. Optional.
+     **/
+    createBoard: function(size, stoneSize) {
         size = size || 19;
         if (this.board && this.board.renderer && this.board.boardSize == size) return;
         try {
             this.dom.boardContainer.innerHTML = "";
-            var rendererProto = (this.renderer == "flash" ?
-                eidogo.BoardRendererFlash : eidogo.BoardRendererHtml);
-            var renderer = new rendererProto(this.dom.boardContainer, size, this, this.cropParams);
+            var rendererProto = (this.renderer == "raphael" ?
+                eidogo.BoardRendererRaphael : eidogo.BoardRendererHtml);
+
+            var renderer = new rendererProto(this.dom.boardContainer, size,
+                this, this.cropParams, this.shrinkBoard, stoneSize);
             this.board = new eidogo.Board(renderer, size);
         } catch (e) {
             if (e == "No DOM container") {
                 this.croak(t['error board']);
                 return;
+            } else {
+              throw e;
             }
         }
     },
@@ -655,10 +695,10 @@ eidogo.Player.prototype = {
         var success = function(req) {
             this.doneLoading();
             this.createMove(req.responseText);
-        }
+        };
         var failure = function(req) {
             this.croak(t['error retrieving']);
-        }
+        };
         var root = this.cursor.getGameRoot();
         var params = {
             sgf: root.toSgf(),
@@ -685,10 +725,10 @@ eidogo.Player.prototype = {
             }
             this.board.render();
             this.prependComment(result[0]);
-        }
+        };
         var failure = function(req) {
             this.croak(t['error retrieving']);
-        }
+        };
         var root = this.cursor.getGameRoot();
         var params = {
             sgf: root.toSgf(),
@@ -702,19 +742,47 @@ eidogo.Player.prototype = {
     
     /**
      * Respond to a move made in problem-solving mode
-    **/
+     **/
     playProblemResponse: function(noRender) {
+        // matias.niklison: Play the response if the following node is not
+        // a commented node.
+        if (this.cursor.hasNext() && this.cursor.getNext().commentType) {
+          return;
+        }
+        // goproblems specific begin.
+        var childrenNodes = this.cursor.node._children;
+        var choices = [];
+        for (var i = 0, length = childrenNodes.length; i < length; i++) {
+          if (childrenNodes[i].choice) {
+            choices.push(i);
+          }
+        }
+
+        var variationNumber = 0;
+        // If I have at least one node with choice, I make a choice between them
+        if (choices.length > 0) {
+          variationNumber = choices[Math.floor(Math.random()*choices.length)];
+        }
+        // goproblems specific end.
+
         // short delay before playing
         setTimeout(function() {
-            this.variation(null, noRender);
-            if (this.hooks.playProblemResponse) {
-                this.hook("playProblemResponse");
-            } else if (!this.cursor.hasNext()) {
-                // not sure if it's safe to say "WRONG" -- that would work for
-                // goproblems.com SGFs but I don't know about others
-                this.prependComment(t['end of variation']);
-            }
+            this.variation(variationNumber, noRender);
         }.bind(this), 200);
+    },
+
+    /**
+     * Shows the problems comment ('end of variation') or a user specified, like
+     * 'SUCCESS' or 'WRONG'.
+     */
+    doShowProblemComments: function() {
+        if (this.hooks.playProblemResponse) {
+            this.hook("playProblemResponse");
+        } else if (!this.cursor.hasNext()) {
+            // not sure if it's safe to say "WRONG" -- that would work for
+            // goproblems.com SGFs but I don't know about others
+            this.prependComment(t['end of variation']);
+        }
     },
     
     /**
@@ -724,9 +792,10 @@ eidogo.Player.prototype = {
     goTo: function(path, fromStart) {
         fromStart = typeof fromStart != "undefined" ? fromStart : true;
         
-        if (fromStart && path.length > 1 && path[0] != this.cursor.getGameRoot().getPosition())
-            this.updatedNavTree = false;
-        
+        if (fromStart && path.length > 1 && path[0] != this.cursor.getGameRoot().getPosition()) {
+            this.navTree.updateNavTree();
+        }
+
         if (fromStart)
             this.resetCursor(true);
         
@@ -741,7 +810,7 @@ eidogo.Player.prototype = {
         }
         
         // Not a path?
-        if (!(path instanceof Array) || !path.length) {
+        if (!(path instanceof Array)) {
             alert(t['bad path'] + " " + path);
             return;
         }
@@ -823,7 +892,6 @@ eidogo.Player.prototype = {
             setTimeout(function() { me.refresh.call(me); }, 10);
             return;
         }
-        this.board.revert(1);
         this.execNode(noRender);
     },
 
@@ -834,6 +902,7 @@ eidogo.Player.prototype = {
      */
     variation: function(varNum, noRender) {
         if (this.cursor.next(varNum)) {
+            this.hook("beforeVariation");
             this.execNode(noRender);
             this.resetLastLabels();
             // Should we continue after loading finishes or just stop
@@ -872,8 +941,13 @@ eidogo.Player.prototype = {
             this.resetCurrentColor();
         }
     
+        if (this.showProblemComments) {
+            this.doShowProblemComments();
+        }
+
         // execute handlers for the appropriate properties
         var props = this.cursor.node.getProperties();
+
         for (var propName in props) {
             if (this.propertyHandlers[propName]) {
                 (this.propertyHandlers[propName]).apply(
@@ -886,6 +960,20 @@ eidogo.Player.prototype = {
         if (noRender) {
             this.board.commit();
         } else {
+          // next-right, next-wrong, next-right-target and next-wrong-target
+          // markers are added here.
+          if (this.navTree.isVisible()) {
+            var children = this.cursor.node.getChildren();
+            for (var i=0, len=children.length; i < len; i++) {
+              var child = children[i];
+              var type = "next-" + (child.success? "right":"wrong");
+              if (this._targetLeaf && child.onSamePath(this._targetLeaf)) {
+                type += "-target";
+              }
+              this.addMarker(child.getMove(), type);
+            }
+          }
+
             // let the opponent move
             if (this.opponentUrl && this.opponentColor == this.currentColor
                 && this.moveNumber == this.totalMoves) {
@@ -902,9 +990,10 @@ eidogo.Player.prototype = {
             this.fetchProgressiveData();
         
         // play a reponse in problem-solving mode, unless we just navigated backwards
-        if (this.problemMode && this.currentColor && this.currentColor != this.problemColor && !this.goingBack)
-            this.playProblemResponse(noRender);
-        
+        if (this.problemMode && this.currentColor
+            && this.currentColor != this.problemColor && !this.goingBack) {
+              this.playProblemResponse(noRender);
+        }
         this.goingBack = false;
     },
     
@@ -959,7 +1048,7 @@ eidogo.Player.prototype = {
             t: (new Date()).getTime()};
         var failure = function(req) {
             this.croak(t['error retrieving']);
-        }
+        };
         var success = function(req) {
             if (!req.responseText || req.responseText == "NONE") {
                 this.progressiveLoads--;
@@ -1028,6 +1117,16 @@ eidogo.Player.prototype = {
     },
 
     back: function(e, obj, noRender) {
+        var color = this.cursor.getColor();
+        if (this.problemMode && color !== this.problemColor) {
+            // When in problemMode it needs to go back two times, if the last move
+            // was not made by the human player.
+                this.doGoBack();
+        }
+        this.doGoBack();
+    },
+
+    doGoBack: function(e, obj, noRender) {
         if (this.cursor.previous()) {
             this.board.revert(1);
             this.goingBack = true;
@@ -1108,14 +1207,68 @@ eidogo.Player.prototype = {
             }
             stopEvent(e);
         }
+        this.handlerHoverStones(x, y);
+        
     },
 
+    /**
+     * Checks if a move should be allowed. Checks for NOTTHIS and FORCE meta
+     * tags.
+     * @param pt {Object} point where the move is going to be checked.
+     */
+    moveAllowed : function (pt) {
+      var isMoveAllowed = true;
+
+      var children = this.cursor.node._children;
+      var move = this.pointToSgfCoord(pt);
+      var variationNumber = this.cursor.hasNext(true)?
+          this.cursor.getNextMoves()[move] : null;
+      for (var i = 0, length = children.length; i < length; i++) {
+        // NOTTHIS IMPLEMENTATION: the user cannot play at a place marked with
+        // NOTTHIS.
+        if (children[i].goproblems && children[i].goproblems.notThis) {
+          if (i === variationNumber) {
+            isMoveAllowed = false;
+            break;
+          }
+        }
+        // FORCE IMPLEMENTATION: If the current stone is marked as FORCE, the
+        // user can only play in a children node.
+        if (this.cursor.node.goproblems && this.cursor.node.goproblems.force) {
+          if (i === variationNumber) {
+            isMoveAllowed = true;
+            break;
+          } else {
+            isMoveAllowed = false;
+          }
+        }
+      }
+
+      return isMoveAllowed;
+    },
+
+    handlerHoverStones : function (x, y) {
+        if (!this.boundsCheck(x, y, [0, this.board.boardSize-1])) return;
+        if (this.problemMode && this.cursor.hasNext(true) &&
+            this.cursor.getNextColor() !== this.problemColor) {
+          // do not show the hover stone if it's the computer's turn.
+          return;
+        }
+        if (!this.moveAllowed({x: x, y:y})) {
+          return;
+        }
+        var color = this.cursor.getNextColor() === "B"? "black" : "white";
+        this.board.renderer.renderHoverStone({x: x, y:y}, color);
+    },
     /**
      * Called by the board renderer upon mouse up, with appropriate coordinate
     **/
     handleBoardMouseUp: function(x, y, e) {
         if (this.domLoading) return;
-        
+        if (!this.moveAllowed({x: x, y:y})) {
+          return;
+        }
+
         this.mouseDown = false;
         
         var coord = this.pointToSgfCoord({x: x, y: y});
@@ -1439,7 +1592,7 @@ eidogo.Player.prototype = {
         // make sure corner search regions touch two adjacent edges of the board
         var edges = [];
         if (bounds[0] == 0) edges.push('n');
-        if (bounds[1] == 0) edges.push('w')
+        if (bounds[1] == 0) edges.push('w');
         if (bounds[0] + bounds[3] == this.board.boardSize) edges.push('s');
         if (bounds[1] + bounds[2] == this.board.boardSize) edges.push('e');
         if (algo == "corner" && !(edges.length == 2 &&
@@ -1511,10 +1664,10 @@ eidogo.Player.prototype = {
                     }.bind(this));
                 }.bind(this), 0);
             }
-        }
+        };
         var failure = function(req) {
             this.croak(t['error retrieving']);
-        }
+        };
         var params = {
             q: quadrant,
             w: bounds[2],
@@ -1636,10 +1789,11 @@ eidogo.Player.prototype = {
         props[this.currentColor] = coord;
         var varNode = new eidogo.GameNode(null, props);
         varNode._cached = true;
+        varNode.setOffPath(true);
         this.totalMoves++;
         this.cursor.node.appendChild(varNode);
         this.unsavedChanges = [this.cursor.node._children.last(), this.cursor.node];
-        this.updatedNavTree = false;
+        this.navTree.updateNavTree();
         this.variation(this.cursor.node._children.length-1);
     },
 
@@ -1673,7 +1827,7 @@ eidogo.Player.prototype = {
             }
             varMoves.push(varMove);
         }
-    
+
         // tool shortcuts
         if (charCode == 112 || charCode == 27) { 
             // f1 or esc
@@ -1956,7 +2110,7 @@ eidogo.Player.prototype = {
             var info = "";
             if (!this.prefs.showPlayerInfo)
                 info += this.getGameDescription(true);
-            if (!this.prefs.showGameInfo)
+            if (this.prefs.showGameInfo)
                 info += this.dom.infoGame.innerHTML;
             if (info.length && this.theme != "problem")
                 this.prependComment(info, "comment-info");
@@ -1966,8 +2120,8 @@ eidogo.Player.prototype = {
         if (!this.progressiveLoad)
             this.updateNavSlider();
         if (this.prefs.showNavTree)
-            this.updateNavTree();
-            
+            this.navTree.updateNavTree();
+
         // multiple games per sgf
         var node = this.cursor.node, pos, html, js;
         if (node._parent && !node._parent._parent && node._parent._children.length > 1) {
@@ -1983,7 +2137,22 @@ eidogo.Player.prototype = {
         }
     },
 
-    setColor: function(color) {
+    /**
+     * PL tells whose turn it is to play. This can be used when
+     * setting up positions or problems.
+     *
+     * Sometimes it has a numerical value that has to be changed to a color:
+     * 1 -> B
+     * 2 -> W
+     * @see http://www.red-bean.com/sgf/properties.html#PL
+     */
+    setColor: function(theColor) {
+      var color = theColor;
+        if (color == "1" || color == "2") {
+          color = color == "1"? "B" : "W";
+        } else if (color != "B" && color != "W") {
+          throw "Unrecognized PL value: (" + color + ")";
+        }
         this.prependComment(color == "B" ? t['black to play'] :
             t['white to play']);
         this.currentColor = this.problemColor = color;
@@ -1998,6 +2167,9 @@ eidogo.Player.prototype = {
      * merely adding a stone.
     **/
     playMove: function(coord, color, noRender) {
+        if (this.hooks.beforePlayMove) {
+          this.hook("beforePlayMove", {noRender : noRender});
+        }
         color = color || this.currentColor;
         this.currentColor = (color == "B" ? "W" : "B");
         color = color == "W" ? this.board.WHITE : this.board.BLACK;
@@ -2089,8 +2261,14 @@ eidogo.Player.prototype = {
     },
 
     showComments: function(comments, junk, noRender) {
-        if (!comments || noRender) return;
-        this.dom.comments.innerHTML += comments.replace(/^(\n|\r|\t|\s)+/, "").replace(/\n/g, "<br />");
+
+        if (noRender || !comments) return;
+
+        if (this.hooks.showComments) {
+          this.hook("showComments", {comments: comments});
+        } else {
+          this.dom.comments.innerHTML += comments.replace(/^(\n|\r|\t|\s)+/, "").replace(/\n/g, "<br />");
+        }
     },
 
     /**
@@ -2101,7 +2279,6 @@ eidogo.Player.prototype = {
         this.dom.comments.innerHTML = "<div class='" + cls + "'>" +
             content + "</div>" + this.dom.comments.innerHTML;
     },
-    
     /**
      * Redirect to a download handler or attempt to display data inline
     **/
@@ -2126,137 +2303,152 @@ eidogo.Player.prototype = {
         stopEvent(evt);
         var success = function(req) {
             this.hook("saved", [req.responseText]);
-        }
+        };
         var failure = function(req) {
             this.croak(t['error retrieving']);
-        }
+        };
         var sgf = this.cursor.getGameRoot().toSgf();
         ajax('POST', this.saveUrl, {sgf: sgf}, success, failure, this, 30000);
     },
 
+    show : function () {
+        eidogo.util.show(this.dom.container);
+        $(this.dom.container).append(this.dom.player);
+
+        // Sets the max width of the navigation tree so that
+        // it fits until the end of the screen.
+        // FIXME: Strictly speaking, this method should be in player.js,
+        // instead of raphaelNavTree.js, but player.js is already to bloated
+        // with unused methods, it really needs a big clean up.
+        // Matias Niklison, Feb 23, 2012.
+        this.navTree.setNavTreeMaxWidth();
+    },
     /**
      * Create the Player layout and insert it into the page. Also store
      * references to all our DOM elements for later use, and add
      * appropriate event handlers.
     **/
     constructDom: function() {
-    
-        this.dom.player = document.createElement('div');
-        this.dom.player.className = "eidogo-player" +
-            (this.theme ? " theme-" + this.theme : "");
-        this.dom.player.id = "player-" + this.uniq;
+        this.dom.player = $('<div>');
+        this.dom.player.attr({
+            'class' : "eidogo-player" + (this.theme ? " theme-" + this.theme : ""),
+            id :  "player-" + this.uniq
+        });
         this.dom.container.innerHTML = "";
-        eidogo.util.show(this.dom.container);
-        this.dom.container.appendChild(this.dom.player);
     
         var domHtml = "\
-            <div id='board-container' class='board-container'></div>\
-            <div id='controls-container' class='controls-container'>\
-                <ul id='controls' class='controls'>\
-                    <li id='control-first' class='control first'>First</li>\
-                    <li id='control-back' class='control back'>Back</li>\
-                    <li id='control-forward' class='control forward'>Forward</li>\
-                    <li id='control-last' class='control last'>Last</li>\
-                    <li id='control-pass' class='control pass'>Pass</li>\
-                </ul>\
-                <div id='move-number' class='move-number" + (this.permalinkable ? " permalink" : "") + "'></div>\
-                <div id='nav-slider' class='nav-slider'>\
-                    <div id='nav-slider-thumb' class='nav-slider-thumb'></div>\
-                </div>\
-                <div id='variations-container' class='variations-container'>\
-                    <div id='variations-label' class='variations-label'>" + t['variations'] + ":</div>\
-                    <div id='variations' class='variations'></div>\
-                </div>\
-                <div class='controls-stop'></div>\
+            <div class='column'>\
+              <div id='board-container' class='board-container'></div>\
+              <div id='game-info-edit' class='game-info-edit'>\
+                  <div id='game-info-edit-form' class='game-info-edit-form'></div>\
+                  <div id='game-info-edit-done' class='game-info-edit-done'>" + t['done'] + "</div>\
+              </div>\
+              <div id='info' class='info'>\
+                  <div id='info-players' class='players'>\
+                      <div id='white' class='player white'>\
+                          <div id='white-name' class='name'></div>\
+                          <div id='white-captures' class='captures'></div>\
+                          <div id='white-time' class='time'></div>\
+                      </div>\
+                      <div id='black' class='player black'>\
+                          <div id='black-name' class='name'></div>\
+                          <div id='black-captures' class='captures'></div>\
+                          <div id='black-time' class='time'></div>\
+                      </div>\
+                  </div>\
+                  <div id='info-game' class='game'></div>\
+              </div>\
             </div>\
-            <div id='tools-container' class='tools-container'" + (this.prefs.showTools ? "" : " style='display: none'") + ">\
-                <div id='tools-label' class='tools-label'>" + t['tool'] + ":</div>\
-                <select id='tools-select' class='tools-select'>\
-                    <option value='play'>&#9658; " + t['play'] + "</option>\
-                    <option value='view'>&#8594; " + t['view'] + "</option>\
-                    <option value='add_b'>&#9679; " + t['add_b'] + "</option>\
-                    <option value='add_w'>&#9675; " + t['add_w'] + "</option>\
-                    " + (this.searchUrl ? ("<option value='region'>&#9618; " + t['region'] + "</option>") : "") +"\
-                    " + (this.saveUrl && !this.progressiveLoad ? ("<option value='comment'>&para; " + t['edit comment'] + "</option>") : "") + "\
-                    " + (this.saveUrl ? ("<option value='gameinfo'>&#8962; " + t['edit game info'] + "</option>") : "") + "\
-                    <option value='tr'>&#9650; " + t['triangle'] + "</option>\
-                    <option value='sq'>&#9632; " + t['square'] + "</option>\
-                    <option value='cr'>&#9679; " + t['circle'] + "</option>\
-                    <option value='x'>&times; " + t['x'] + "</option>\
-                    <option value='letter'>A " + t['letter'] + "</option>\
-                    <option value='number'>5 " + t['number'] + "</option>\
-                    <option value='label'>&Ccedil; " + t['label'] + "</option>\
-                    <option value='dim'>&#9619; " + t['dim'] + "</option>\
-                    <option value='clear'>&#9617; " + t['clear'] + "</option>\
-                </select>\
-                <input type='button' id='score-est' class='score-est-button' value='" + t['score est'] + "' />\
-                <select id='search-algo' class='search-algo'>\
-                    <option value='corner'>" + t['search corner'] + "</option>\
-                    <option value='center'>" + t['search center'] + "</option>\
-                </select>\
-                <input type='button' id='search-button' class='search-button' value='" + t['search'] + "' />\
-                <input type='text' id='label-input' class='label-input' />\
+            <div class='column column-margin'>\
+              <div id='controls-container' class='controls-container'>\
+                  <ul id='controls' class='controls'>\
+                      <li id='control-first' class='control first'>First</li>\
+                      <li id='control-back' class='control back'>Back</li>\
+                      <li id='control-forward' class='control forward'>Forward</li>\
+                      <li id='control-last' class='control last'>Last</li>\
+                      <li id='control-pass' class='control pass'>Pass</li>\
+                  </ul>\
+                  <div id='move-number' class='move-number" + (this.permalinkable ? " permalink" : "") + "'></div>\
+                  <div id='nav-slider' class='nav-slider'>\
+                      <div id='nav-slider-thumb' class='nav-slider-thumb'></div>\
+                  </div>\
+                  <div id='variations-container' class='variations-container'>\
+                      <div id='variations-label' class='variations-label'>" + t['variations'] + ":</div>\
+                      <div id='variations' class='variations'></div>\
+                  </div>\
+                  <div class='controls-stop'></div>\
+              </div>\
+              <div id='tools-container' class='tools-container'" + (this.prefs.showTools ? "" : " style='display: none'") + ">\
+                  <div id='tools-label' class='tools-label'>" + t['tool'] + ":</div>\
+                  <select id='tools-select' class='tools-select'>\
+                      <option value='play'>&#9658; " + t['play'] + "</option>\
+                      <option value='view'>&#8594; " + t['view'] + "</option>\
+                      <option value='add_b'>&#9679; " + t['add_b'] + "</option>\
+                      <option value='add_w'>&#9675; " + t['add_w'] + "</option>\
+                      " + (this.searchUrl ? ("<option value='region'>&#9618; " + t['region'] + "</option>") : "") +"\
+                      " + (this.saveUrl && !this.progressiveLoad ? ("<option value='comment'>&para; " + t['edit comment'] + "</option>") : "") + "\
+                      " + (this.saveUrl ? ("<option value='gameinfo'>&#8962; " + t['edit game info'] + "</option>") : "") + "\
+                      <option value='tr'>&#9650; " + t['triangle'] + "</option>\
+                      <option value='sq'>&#9632; " + t['square'] + "</option>\
+                      <option value='cr'>&#9679; " + t['circle'] + "</option>\
+                      <option value='x'>&times; " + t['x'] + "</option>\
+                      <option value='letter'>A " + t['letter'] + "</option>\
+                      <option value='number'>5 " + t['number'] + "</option>\
+                      <option value='label'>&Ccedil; " + t['label'] + "</option>\
+                      <option value='dim'>&#9619; " + t['dim'] + "</option>\
+                      <option value='clear'>&#9617; " + t['clear'] + "</option>\
+                  </select>\
+                  <input type='button' id='score-est' class='score-est-button' value='" + t['score est'] + "' />\
+                  <select id='search-algo' class='search-algo'>\
+                      <option value='corner'>" + t['search corner'] + "</option>\
+                      <option value='center'>" + t['search center'] + "</option>\
+                  </select>\
+                  <input type='button' id='search-button' class='search-button' value='" + t['search'] + "' />\
+                  <input type='text' id='label-input' class='label-input' />\
+              </div>\
+              <div id='comments' class='comments'></div>\
+              <div id='comments-edit' class='comments-edit'>\
+                  <textarea id='comments-edit-ta' class='comments-edit-ta'></textarea>\
+                  <div id='comments-edit-done' class='comments-edit-done'>" + t['done'] + "</div>\
+              </div>\
+              <div id='search-container' class='search-container'>\
+                  <div id='search-close' class='search-close'>" + t['close search'] + "</div>\
+                  <p class='search-count'><span id='search-count'></span>&nbsp;" + t['matches found'] + "\
+                      Showing <span id='search-offset-start'></span>-<span id='search-offset-end'></span></p>\
+                  <div id='search-results-container' class='search-results-container'>\
+                      <div class='search-result'>\
+                          <span class='pw'><b>" + t['white'] + "</b></span>\
+                          <span class='pb'><b>" + t['black'] + "</b></span>\
+                          <span class='re'><b>" + t['result'] + "</b></span>\
+                          <span class='dt'><b>" + t['date'] + "</b></span>\
+                          <div class='clear'></div>\
+                      </div>\
+                      <div id='search-results' class='search-results'></div>\
+                  </div>\
+              </div>\
+              <div id='options' class='options'>\
+                  " + (this.saveUrl ? "<a id='option-save' class='option-save' href='#'>" + t['save to server'] + "</a>" : "") + "\
+                  " + (this.downloadUrl || isMoz ? "<a id='option-download' class='option-download' href='#'>" + t['download sgf'] + "</a>" : "") + "\
+                  <div class='options-stop'></div>\
+              </div>\
+              <div id='preferences' class='preferences'>\
+                  <div><input type='checkbox'> Show variations on board</div>\
+                  <div><input type='checkbox'> Mark current move</div>\
+              </div>\
             </div>\
-            <div id='comments' class='comments'></div>\
-            <div id='comments-edit' class='comments-edit'>\
-                <textarea id='comments-edit-ta' class='comments-edit-ta'></textarea>\
-                <div id='comments-edit-done' class='comments-edit-done'>" + t['done'] + "</div>\
-            </div>\
-            <div id='game-info-edit' class='game-info-edit'>\
-                <div id='game-info-edit-form' class='game-info-edit-form'></div>\
-                <div id='game-info-edit-done' class='game-info-edit-done'>" + t['done'] + "</div>\
-            </div>\
-            <div id='search-container' class='search-container'>\
-                <div id='search-close' class='search-close'>" + t['close search'] + "</div>\
-                <p class='search-count'><span id='search-count'></span>&nbsp;" + t['matches found'] + "\
-                    Showing <span id='search-offset-start'></span>-<span id='search-offset-end'></span></p>\
-                <div id='search-results-container' class='search-results-container'>\
-                    <div class='search-result'>\
-                        <span class='pw'><b>" + t['white'] + "</b></span>\
-                        <span class='pb'><b>" + t['black'] + "</b></span>\
-                        <span class='re'><b>" + t['result'] + "</b></span>\
-                        <span class='dt'><b>" + t['date'] + "</b></span>\
-                        <div class='clear'></div>\
-                    </div>\
-                    <div id='search-results' class='search-results'></div>\
-                </div>\
-            </div>\
-            <div id='info' class='info'>\
-                <div id='info-players' class='players'>\
-                    <div id='white' class='player white'>\
-                        <div id='white-name' class='name'></div>\
-                        <div id='white-captures' class='captures'></div>\
-                        <div id='white-time' class='time'></div>\
-                    </div>\
-                    <div id='black' class='player black'>\
-                        <div id='black-name' class='name'></div>\
-                        <div id='black-captures' class='captures'></div>\
-                        <div id='black-time' class='time'></div>\
-                    </div>\
-                </div>\
-                <div id='info-game' class='game'></div>\
-            </div>\
-            <div id='nav-tree-container' class='nav-tree-container'>\
-                <div id='nav-tree' class='nav-tree'></div>\
-            </div>\
-            <div id='options' class='options'>\
-                " + (this.saveUrl ? "<a id='option-save' class='option-save' href='#'>" + t['save to server'] + "</a>" : "") + "\
-                " + (this.downloadUrl || isMoz ? "<a id='option-download' class='option-download' href='#'>" + t['download sgf'] + "</a>" : "") + "\
-                <div class='options-stop'></div>\
-            </div>\
-            <div id='preferences' class='preferences'>\
-                <div><input type='checkbox'> Show variations on board</div>\
-                <div><input type='checkbox'> Mark current move</div>\
+            <div class='column column-margin'>\
+              <div id='nav-tree-container' class='nav-tree-container'>\
+              </div>\
             </div>\
             <div id='footer' class='footer'></div>\
             <div id='shade' class='shade'></div>\
         ";
-        
+
         // unique ids for each element so we can have multiple Player
         // instances on a page
         domHtml = domHtml.replace(/ id='([^']+)'/g, " id='$1-" + this.uniq + "'");
         
-        this.dom.player.innerHTML = domHtml;
+        this.dom.player.html(domHtml);
         
         // grab all the dom elements for later use
         var re = / id='([^']+)-\d+'/g;
@@ -2271,7 +2463,7 @@ eidogo.Player.prototype = {
                 word = i ? word.charAt(0).toUpperCase() + word.substring(1) : word;
                 jsName += word
             });
-            this.dom[jsName] = byId(id);
+            this.dom[jsName] = this.dom.player.find("#"+id)[0];
         }
         
         // dom element      handler
@@ -2288,8 +2480,7 @@ eidogo.Player.prototype = {
          ['optionDownload',   'downloadSgf'],
          ['optionSave',       'save'],
          ['commentsEditDone', 'finishEditComment'],
-         ['gameInfoEditDone', 'finishEditGameInfo'],
-         ['navTree',          'navTreeClick']
+         ['gameInfoEditDone', 'finishEditGameInfo']
         ].forEach(function(eh) {
             if (this.dom[eh[0]]) onClick(this.dom[eh[0]], this[eh[1]], this);
         }.bind(this));
@@ -2298,7 +2489,7 @@ eidogo.Player.prototype = {
             this.selectTool.apply(this, [(e.target || e.srcElement).value]);
         }, this, true);
     },
-    
+
     enableNavSlider: function() {
         // don't use slider for progressively-loaded games
         if (this.progressiveLoad) {
@@ -2366,170 +2557,22 @@ eidogo.Player.prototype = {
         offset = parseInt(moveOffset / steps * width, 10) || 0;
         this.dom.navSliderThumb.style.left = offset + "px";
     },
-    
+
     /**
-     * Construct a navigation tree from scratch, assuming it hasn't been done
-     * already and no unsaved additions have been made.
-     *
-     * We do this in two passes:
-     *    1) Construct a 2D array, navGrid, containing all nodes and where
-     *       to display them horizontally and vertically (adjustments are
-     *       made to avoid overlapping lines of play)
-     *    2) Based on navGrid, construct an HTML table to actually display
-     *       the nav tree
-     *
-     * We use a timeout to limit how often the intense calculations happen,
-     * and to provide a more responsive UI.
-    **/
-    updateNavTree: function(update) {
-        if (!this.prefs.showNavTree)
-            return;
-        if (this.updatedNavTree) {
-            this.showNavTreeCurrent();
-            return;
-        }
-        // Reconstruct the nav tree a max of once per second (if multiple
-        // moves are played quickly in a row, it will wait until one second
-        // after the last one is played). The timeout also has the benefit
-        // of updating the rest of the UI first, so it seems more responsive.
-        if (!update) {
-            if (this.navTreeTimeout)
-                clearTimeout(this.navTreeTimeout);
-            this.navTreeTimeout = setTimeout(function() {
-                this.updateNavTree(true);
-            }.bind(this), eidogo.browser.ie ? 1000 : 500);
-            return;
-        }
-        this.updatedNavTree = true;
-        // Construct 2D nav grid
-        var navGrid = [],
-            gameRoot = this.cursor.getGameRoot();
-            path = [gameRoot.getPosition()],
-            cur = new eidogo.GameCursor(),
-            maxx = 0;
-        var traverse = function(node, startx, starty) {
-            var y = starty, x = startx;
-            var n = node, width = 1;
-            while (n && n._children.length == 1) {
-                width++;
-                n = n._children[0];
-            }
-            // If we'll overlap any future moves, skip down a row
-            while (navGrid[y] && navGrid[y].slice(x, x + width + 1).some(function(el) {
-                return (typeof el != "undefined");
-            })) {
-                y++;
-            }
-            do {   
-                if (!navGrid[y])
-                    navGrid[y] = [];
-                cur.node = node;
-                node._pathStr = path.join('-') + "-" + (x - startx);
-                navGrid[y][x] = node;
-                if (x > maxx)
-                    maxx = x;
-                x++;
-                if (node._children.length != 1) break;
-                node = node._children[0];
-            } while (node);
-            for (var i = 0; i < node._children.length; i++) {
-                path.push(i);
-                traverse(node._children[i], x, y);
-                path.pop();
-            }
-        }
-        traverse(gameRoot, 0, 0);
-        // Construct HTML
-        var html = ["<table class='nav-tree'>"],
-            node, td, cur = new eidogo.GameCursor(),
-            x, y, showLine,
-            ELBOW = 1, LINE = 2;
-        for (x = 0; x < maxx; x++) {
-            showLine = false
-            for (y = navGrid.length - 1; y > 0; y--) {
-                if (!navGrid[y][x]) {
-                    if (typeof navGrid[y][x + 1] == "object") {
-                        navGrid[y][x] = ELBOW;
-                        showLine = true;
-                    } else if (showLine) {
-                        navGrid[y][x] = LINE;
-                    }
-                } else {
-                    showLine = false;
-                }
-            }    
-        }
-        for (y = 0; y < navGrid.length; y++) {
-            html.push("<tr>");
-            for (x = 0; x < navGrid[y].length; x++) {
-                node = navGrid[y][x];
-                if (node == ELBOW) {
-                    td = "<div class='elbow'></div>";
-                } else if (node == LINE) {
-                    td = "<div class='line'></div>";
-                } else if (node) {
-                    td = ["<a href='#' id='navtree-node-",
-                          node._pathStr,
-                          "' class='",
-                          (typeof node.W != "undefined" ? 'w' :
-                          (typeof node.B != "undefined" ? 'b' : 'x')),
-                          "'>",
-                          x,
-                          "</a>"].join("");
-                } else {
-                    td = "<div class='empty'></div>";
-                }
-                html.push("<td>");
-                html.push(td);
-                html.push("</td>");
-            }
-            html.push("</tr>");
-        }
-        html.push("</table>");
-        this.dom.navTree.innerHTML = html.join("");
-        setTimeout(function() {
-            this.showNavTreeCurrent();
-        }.bind(this), 0);
+     * Called when the user clicks on the nav tree.
+     * @param path The path of the clicked stone in the nav tree.
+     */
+    onNavTreeClick: function(path) {
+      this.goTo(path, true);
     },
-    
-    showNavTreeCurrent: function() {
-        var id = "navtree-node-" + this.cursor.getPath().join("-"),
-            current = byId(id);
-        if (!current) return;
-        // Highlight node
-        if (this.prevNavTreeCurrent)
-            this.prevNavTreeCurrent.className = this.prevNavTreeCurrentClass;
-        this.prevNavTreeCurrent = current;
-        this.prevNavTreeCurrentClass = current.className;
-        current.className = "current";
-        // Scroll into view if necessary
-        var w = current.offsetWidth,
-            h = current.offsetHeight,
-            xy = eidogo.util.getElXY(current),
-            navxy = eidogo.util.getElXY(this.dom.navTree),
-            l = xy[0] - navxy[0],
-            t = xy[1] - navxy[1],
-            ntc = this.dom.navTreeContainer,
-            maxl = ntc.scrollLeft,
-            maxr = maxl + ntc.offsetWidth - 100;
-            maxt = ntc.scrollTop,
-            maxb = maxt + ntc.offsetHeight - 30;
-        if (l < maxl)
-            ntc.scrollLeft -= (maxl - l);
-        if (l + w > maxr)
-            ntc.scrollLeft += ((l + w) - maxr);
-        if (t < maxt)
-            ntc.scrollTop -= (maxt - t);
-        if (t + h > maxb)
-            ntc.scrollTop += ((t + h) - maxb);
-    },
-    
-    navTreeClick: function(e) {
-        var target = e.target || e.srcElement;
-        if (!target || !target.id) return;
-        var path = target.id.replace(/^navtree-node-/, "").split("-");
-        this.goTo(path, true);
-        stopEvent(e);
+
+    /**
+     * Called when the target leaf changes. Called from the nav tree.
+     * @param theTargetLeaf
+     */
+    onTargetLeafChange: function (theTargetLeaf) {
+      this._targetLeaf = theTargetLeaf;
+      this.execNode();
     },
 
     resetLastLabels: function() {
@@ -2573,20 +2616,39 @@ eidogo.Player.prototype = {
         return pts[pt.x] + pts[pt.y];
     },
 
+    /**
+     * Points can be represented as a single point [xy] or as a compressed
+     * rectangle, giving the upper left and lower right corners, like this:
+     * [ul:lr] (http://www.red-bean.com/sgf/sgf4.html). This kind of points are
+     * only used for labels (http://www.red-bean.com/sgf/properties.html#AR),
+     * arrows (http://www.red-bean.com/sgf/properties.html#AR) and
+     * lines (http://www.red-bean.com/sgf/properties.html#LN), that allways have
+     * this format:
+     * [point or composed point:something else]
+     * where something else can be a text or the destination point for the arrow
+     * or line.
+     * This method takes the square format [ul:lr:destinationOrText] and
+     * expands it into a list of points [xy:destinationOrText].
+     * Documentation by: matias.niklison@gmail.com
+     * @param coords
+     * @returns
+     */
     expandCompressedPoints: function(coords) {
         var bounds;
-        var ul, lr;
+        var ul, lr, destinationOrText;
         var x, y;
         var newCoords = [];
         var hits = [];
         for (var i = 0; i < coords.length; i++) {
             bounds = coords[i].split(/:/);
-            if (bounds.length > 1) {
+            if (bounds.length > 2) {
                 ul = this.sgfCoordToPoint(bounds[0]);
                 lr = this.sgfCoordToPoint(bounds[1]);
+                destinationOrText = this.sgfCoordToPoint(bounds[2]);
                 for (x = ul.x; x <= lr.x; x++) {
                    for (y = ul.y; y <= lr.y; y++) {
-                       newCoords.push(this.pointToSgfCoord({x:x,y:y}));
+                       newCoords.push(this.pointToSgfCoord({x:x,y:y}) + ":"
+                           + destinationOrText);
                    }
                 }
                 hits.push(i);
@@ -2613,17 +2675,18 @@ eidogo.Player.prototype = {
         if (this.croaked || this.problemMode) return;
         msg = msg || t['loading'] + "...";
         if (byId('eidogo-loading-' + this.uniq)) return;
-        this.domLoading = document.createElement('div');
-        this.domLoading.id = "eidogo-loading-" + this.uniq;
-        this.domLoading.className = "eidogo-loading" +
-            (this.theme ? " theme-" + this.theme : "");
-        this.domLoading.innerHTML = msg;
-        this.dom.player.appendChild(this.domLoading);
+        this.domLoading = $('<div>');
+        this.domLoading.attr({
+          id : "eidogo-loading-" + this.uniq,
+          'class' : "eidogo-loading" + (this.theme ? " theme-" + this.theme : "")
+        });
+        this.domLoading.html(msg);
+        this.dom.player.append(this.domLoading);
     },
     
     doneLoading: function() {
-        if (this.domLoading && this.domLoading != null && this.domLoading.parentNode) {
-            this.domLoading.parentNode.removeChild(this.domLoading);
+        if (this.domLoading) {
+            this.domLoading.remove();
             this.domLoading = null;
         }
     },
@@ -2635,9 +2698,9 @@ eidogo.Player.prototype = {
         } else if (this.problemMode) {
             this.prependComment(msg);
         } else {
-            this.dom.player.innerHTML += "<div class='eidogo-error " +
+            this.dom.player.append($("<div class='eidogo-error " +
                 (this.theme ? " theme-" + this.theme : "") + "'>" +
-                msg.replace(/\n/g, "<br />") + "</div>";
+                msg.replace(/\n/g, "<br />") + "</div>"));
             this.croaked = true;
         }
     }

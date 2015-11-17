@@ -1,0 +1,74 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Go Problems</title>
+
+    <!-- International support -->
+    <!-- <script type="text/javascript" src="../player/i18n/XXX.js"></script>
+    
+    <script type="text/javascript" src="../player/js/all.compressed.js"></script> -->
+
+    <script type="text/javascript" src="../js/jquery-1.7.1.js"></script>
+    <script type="text/javascript" src="../js/raphael.js"></script>
+
+    <!-- Uncomment the following to work with the original source. -->
+    <script type="text/javascript" src="../player/js/lang.js"></script>
+    <script type="text/javascript" src="../player/js/eidogo.js"></script>
+    <script type="text/javascript" src="../player/js/util.js"></script>
+    <script type="text/javascript" src="../player/i18n/en.js"></script>
+    <script type="text/javascript" src="../player/js/gametree.js"></script>
+    <script type="text/javascript" src="../player/js/sgf.js"></script>
+    <script type="text/javascript" src="../player/js/board.js"></script>
+    <script type="text/javascript" src="../player/js/boardRaphael.js"></script>
+    <script type="text/javascript" src="../player/js/navTree/raphaelNavTree.js"></script>
+    <script type="text/javascript" src="../player/js/rules.js"></script>
+    <script type="text/javascript" src="../player/js/player.js"></script>
+    <script type="text/javascript" src="../player/js/init.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/3.3.0/build/cssreset/reset-min.css">
+    <link href="../css/goproblems.css" rel="stylesheet" type="text/css">
+    <link href="../css/comments.css" rel="stylesheet" type="text/css">
+    <link href="../css/board-big.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+	
+    <div id="player-container" style="display:none;">(;GM[1]FF[4]CA[UTF-8]AP[CGoban:2]ST[2]
+RU[Japanese]SZ[13]KM[0.00]
+PW[White]PB[Black]AW[cj][dj][ej][ek][fk][hk][el][gl][jl][kl][em][fm][km]AB[eg][eh][jh][bi][ci][di][ei][fi][hi][aj][bj][jj][ak][ck][dk][kk][al][bl][ll][cm][dm][lm]TR[km][lm]C[B plays the marked stone and W hastily responds with his own marked stone. How should B punish?]
+(;B[il]CR[il]
+;W[ik]CR[ik]
+;B[jk]CR[jk]C[RIGHT]C[Black captures three stones.])
+(;B[jk]CR[jk]
+;W[il]CR[il])
+(;B[lk]CR[lk]C[No effect on white])
+(;B[ik]CR[ik]
+;W[il]CR[il])
+(;B[im]CR[im]
+;W[ik]CR[ik])
+(;B[jm]CR[jm]
+;W[im]CR[im]
+(;B[jk]CR[jk]
+;W[ik]CR[ik])
+(;B[ik]CR[ik]
+;W[il]CR[il])
+(;B[il]CR[il]
+;W[ik]CR[ik])))</div>
+
+  <script type="text/javascript" src="../js/goproblems.js"></script>
+  <script type="text/javascript" src="../js/comments.js"></script>
+  <script>
+    $(function() {
+      player = new go.problems.Player("player-container",
+          {
+            dbId : 1,
+            userId : 1,
+            commentsURL : "util/jsoncomments.php?",
+            postCommentsURL : "util/addcomment.php",
+            stoneSize : 35,
+            debugMode : true,
+            seenbefore : false
+          });
+    });
+  </script>
+</body>
+</html>

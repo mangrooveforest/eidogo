@@ -57,6 +57,12 @@ eidogo.Rules.prototype = {
         color = color == this.board.WHITE ? "W" : "B";
         this.board.captures[color] += captures;
     },
+    /**
+     * 
+     * @param pt The point that is going to be checked for captures
+     * @param color
+     * @returns the number of captured stones
+     */
     doCapture: function(pt, color) {
         this.pendingCaptures = [];
         if (this.findCaptures(pt, color))
@@ -67,32 +73,38 @@ eidogo.Rules.prototype = {
         }
         return caps;
     },
+    /**
+     * 
+     * @param pt
+     * @param color
+     * @returns true if it has a liberty
+     */
     findCaptures: function(pt, color) {
         // out of bounds?
         if (pt.x < 0 || pt.y < 0 ||
             pt.x >= this.board.boardSize || pt.y >= this.board.boardSize)
-            return 0;
+            return false;
         // found opposite color
         if (this.board.getStone(pt) == color)
-            return 0;
+            return false;
         // found a liberty
         if (this.board.getStone(pt) == this.board.EMPTY)
-            return 1;
+            return true;
         // already visited?
         for (var i = 0; i < this.pendingCaptures.length; i++)
             if (this.pendingCaptures[i].x == pt.x && this.pendingCaptures[i].y == pt.y)
-                return 0;
+                return false;
         
         this.pendingCaptures.push(pt);
         
         if (this.findCaptures({x: pt.x-1, y: pt.y}, color))
-            return 1;
+            return true;
         if (this.findCaptures({x: pt.x+1, y: pt.y}, color))
-            return 1;
+            return true;
         if (this.findCaptures({x: pt.x, y: pt.y-1}, color))
-            return 1;
+            return true;
         if (this.findCaptures({x: pt.x, y: pt.y+1}, color))
-            return 1;
-        return 0;
+            return true;
+        return false;
     }
 }

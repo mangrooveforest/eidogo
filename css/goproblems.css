@@ -1,0 +1,361 @@
+/*- RESETS -*/
+
+.eidogo-player a:link {color: white;}      /* unvisited link */
+.eidogo-player a:visited {color: white;}  /* visited link */
+.eidogo-player a:hover {color: white;}  /* mouse over link */
+.eidogo-player a:active {color: white;}  /* selected link */
+
+/*---*/
+
+.eidogo-player .comments {
+  height: 80px;
+}
+
+.eidogo-player .controls .show-solution {
+  font-size: 12px;
+  text-indent: 0;
+  cursor: pointer;
+  float: left;
+  height: 19px;
+  margin: 6px 0 5px 6px;
+  position: relative;
+}
+
+.eidogo-player .controls .show-solution button {
+  font-size: 12px;
+  padding: 0;
+  position: relative;
+  top: -4px;
+  *width: 150px;
+}
+
+.eidogo-player .controls .to-move {
+  float: left;
+  width: 74px;
+  height: 19px;
+  margin: 1px 0 5px 43px;
+  padding: 2px 0 2px 2px;
+  background: #ddbc6b;
+  border: 1px solid #ae9454;
+  color: black;
+  text-indent: 4px;
+  line-height: 17px;
+  font-size: 12px; 
+}
+
+.eidogo-player .controls .to-move span {
+  display: block;
+  float: left;
+  width: 19px;
+  height: 19px;
+}
+
+.eidogo-player .controls .to-move span.black {
+	background: url("../images/stones.png") no-repeat 0 0;
+}
+
+.eidogo-player .controls .to-move span.white {
+	background: url("../images/stones.png") no-repeat 0 -19px;
+}
+
+.eidogo-player .options a {
+  margin-bottom: 0;
+}
+
+/*--- Board coords ---*/
+
+.eidogo-player .board-container.shrunk .coords.top {
+  background: none;
+}
+
+.eidogo-player .board-container.shrunk .coords.sides {
+  background: none;
+}
+
+.eidogo-player .coords.sides {
+  float: left;
+}
+
+.eidogo-player .board-container .coords.bottom {
+  clear: both;
+}
+
+.eidogo-player .board-container.shrunk .coords.bottom {
+  background: none;
+}
+
+.eidogo-player .board-gutter {
+  padding: 0;
+  margin: 0;
+}
+
+.eidogo-player .board-gutter.with-coords {
+  background: none;
+  float: left;
+}
+
+.eidogo-player .board-container {
+  background-color: #665544;
+  width: auto;
+  height: auto;
+  padding: 10px;
+}
+
+/*--- Navigation Tree ---*/
+
+/* nav tree */
+
+.eidogo-player .nav-tree table td.stone {
+  background: url("../images/navtree-line.png") repeat-x 0 12px scroll;
+}
+
+.eidogo-player .nav-tree table td.stone.success {
+  background-image: url("../images/navtree-line-success.png");
+}
+
+.eidogo-player .nav-tree table td.stone a {
+  margin-bottom: 0;
+}
+
+.eidogo-player .nav-tree table td.stone a.b {
+  background: url("../images/stones.png") no-repeat scroll 0 0 transparent;
+}
+
+.eidogo-player .nav-tree table td.stone a.w {
+  background: url("../images/stones.png") no-repeat scroll 0 -19px transparent;
+}
+
+.eidogo-player .nav-tree table td.stone a.b.with-comment {
+  background: url("../images/stones.png") no-repeat scroll -19px 0 transparent;
+}
+
+.eidogo-player .nav-tree table td.stone a.w.with-comment {
+  background: url("../images/stones.png") no-repeat scroll -19px -19px transparent;
+}
+
+.eidogo-player .nav-tree table td.elbow {
+  background: url("../images/navtree-elbow.png") no-repeat 14px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.elbow.success {
+  background-image: url("../images/navtree-elbow-success.png");
+}
+
+.eidogo-player .nav-tree table td.fork {
+  background: url("../images/navtree-fork.png") no-repeat 14px 0px scroll;
+}
+
+/* The fork is a success, but the main not. */
+.eidogo-player .nav-tree table td.fork.fork-success {
+  background-image: url("../images/navtree-fork-forksuccess.png");
+}
+
+/* The main is a success, but the fork not. */
+.eidogo-player .nav-tree table td.fork.success {
+  background-image: url("../images/navtree-fork-success.png");
+}
+
+/* Both are successes. */
+.eidogo-player .nav-tree table td.fork.success.fork-success {
+  background-image: url("../images/navtree-fork-success-forksuccess.png");
+}
+
+.eidogo-player .nav-tree table td.line.success,
+.eidogo-player .nav-tree table td.line.fork-success {
+  background: url("../images/navtree-line-success.png") repeat-y 14px 0 scroll;
+}
+
+.eidogo-player .nav-tree table td.line {
+  background: url("../images/navtree-line.png") repeat-y 14px 0 scroll;
+}
+
+/*-- external comments --*/
+.eidogo-player .nav-tree table td.stone.comment-comment {
+  background: url("../images/navtree-line-comment-comment.png") repeat-x 0 11px scroll;
+}
+
+.eidogo-player .nav-tree table td.stone.comment-question {
+  background: url("../images/navtree-line-comment-question.png") repeat-x 0 11px scroll;
+}
+
+.eidogo-player .nav-tree table td.stone.comment-correct {
+  background: url("../images/navtree-line-comment-correct.png") repeat-x 0 11px scroll;
+}
+
+.eidogo-player .nav-tree table td.stone.comment-wrong {
+  background: url("../images/navtree-line-comment-wrong.png") repeat-x 0 11px scroll;
+}
+
+.eidogo-player .nav-tree table td.line.comment-comment {
+  background: url("../images/navtree-vline-comment-comment.png") repeat-y 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.line.comment-question {
+  background: url("../images/navtree-vline-comment-question.png") repeat-y 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.line.comment-correct {
+  background: url("../images/navtree-vline-comment-correct.png") repeat-y 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.line.comment-wrong {
+  background: url("../images/navtree-vline-comment-wrong.png") repeat-y 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.elbow.comment-comment {
+  background: url("../images/navtree-elbow-comment-comment.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.elbow.comment-question {
+  background: url("../images/navtree-elbow-comment-question.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.elbow.comment-correct {
+  background: url("../images/navtree-elbow-comment-correct.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.elbow.comment-wrong {
+  background: url("../images/navtree-elbow-comment-wrong.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-comment.comment-fork-comment {
+  background: url("../images/navtree-fork-comment-comment-forkcomment.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-comment.comment-fork-question {
+  background: url("../images/navtree-fork-comment-comment-forkquestion.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-comment.comment-fork-correct {
+  background: url("../images/navtree-fork-comment-comment-forkcorrect.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-comment.comment-fork-wrong {
+  background: url("../images/navtree-fork-comment-comment-forkwrong.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-question.comment-fork-comment {
+  background: url("../images/navtree-fork-comment-question-forkcomment.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-question.comment-fork-question {
+  background: url("../images/navtree-fork-comment-question-forkquestion.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-question.comment-fork-correct {
+  background: url("../images/navtree-fork-comment-question-forkquestion.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-question.comment-fork-wrong {
+  background: url("../images/navtree-fork-comment-question-forkwrong.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-correct.comment-fork-comment {
+  background: url("../images/navtree-fork-comment-correct-forkcomment.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-correct.comment-fork-question {
+  background: url("../images/navtree-fork-comment-correct-forkquestion.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-correct.comment-fork-correct {
+  background: url("../images/navtree-fork-comment-correct-forkquestion.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-correct.comment-fork-wrong {
+  background: url("../images/navtree-fork-comment-correct-forkwrong.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-wrong.comment-fork-comment {
+  background: url("../images/navtree-fork-comment-wrong-forkcomment.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-wrong.comment-fork-question {
+  background: url("../images/navtree-fork-comment-wrong-forkquestion.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-wrong.comment-fork-correct {
+  background: url("../images/navtree-fork-comment-wrong-forkquestion.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-wrong.comment-fork-wrong {
+  background: url("../images/navtree-fork-comment-wrong-forkwrong.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-fork-comment {
+  background: url("../images/navtree-fork-forkcomment.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-fork-question {
+  background: url("../images/navtree-fork-forkquestion.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-fork-correct {
+  background: url("../images/navtree-fork-forkcorrect.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-fork-wrong {
+  background: url("../images/navtree-fork-forkwrong.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.success.comment-fork-comment {
+  background: url("../images/navtree-fork-success-forkcomment.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.success.comment-fork-question {
+  background: url("../images/navtree-fork-success-forkquestion.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.success.comment-fork-correct {
+  background: url("../images/navtree-fork-success-forkcorrect.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.success.comment-fork-wrong {
+  background: url("../images/navtree-fork-success-forkwrong.png") no-repeat 12px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-comment {
+  background: url("../images/navtree-fork-comment-comment.png") no-repeat 14px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-question {
+  background: url("../images/navtree-fork-comment-question.png") no-repeat 14px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-correct {
+  background: url("../images/navtree-fork-comment-correct.png") no-repeat 14px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.comment-wrong {
+  background: url("../images/navtree-fork-comment-wrong.png") no-repeat 14px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.success.comment-comment {
+  background: url("../images/navtree-fork-success-comment-comment.png") no-repeat 14px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.success.comment-question {
+  background: url("../images/navtree-fork-success-comment-question.png") no-repeat 14px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.success.comment-correct {
+  background: url("../images/navtree-fork-success-comment-correct.png") no-repeat 14px 0px scroll;
+}
+
+.eidogo-player .nav-tree table td.fork.success.comment-wrong {
+  background: url("../images/navtree-fork-success-comment-wrong.png") no-repeat 14px 0px scroll;
+}
+
+.eidogo-player .terminate-right {
+background: #afa;
+font-weight: bold;
+padding: 4px;
+border: 1px solid #44AA44;
+}
+
+.eidogo-player .terminate-wrong {
+background: #faa;
+font-weight: bold;
+padding: 4px;
+border: 1px solid #a44;
+}
