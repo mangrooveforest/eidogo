@@ -374,13 +374,21 @@ go.problems.Player.prototype = {
    * Sends the result of the problem to the server.
    */
   sendResult2Server : function (success, hardstop, cursor) {
-        if (false) {
-            // by default, send anon results to the server
-            if (!this.configuration.userId) {
-                // The user is not logged in.
-                return;
-            }
-        }
+      if (false) {
+          // by default, send anon results to the server
+          if (!this.configuration.userId) {
+              // The user is not logged in.
+              return;
+          }
+      }
+
+      if (this.configuration.validating) {
+	  if (success) {
+	      // redirect to page that records it
+	      window.location = "/add/verify.php?id=" + this.configuration.dbId;
+	  }
+	  return;
+      }
 
     var data = {
       id : this.configuration.dbId,
@@ -400,8 +408,7 @@ go.problems.Player.prototype = {
     if (!this.configuration.debugMode && !this.configuration.demoMode) {
       $.post("solve.php3", data, function(data, textStatus){
         if (textStatus !== "success") {
-          go.problems.utils.showMessageDialog("There was an error saving the " +
-              "result of the exercise to the server!");
+          go.problems.utils.showMessageDialog("There was an error saving the result of the problem to the server!");
         }
       });
       if (typeof ga != "undefined")
