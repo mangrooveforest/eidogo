@@ -381,6 +381,13 @@ go.problems.Player.prototype = {
                 return;
             }
         }
+      if (this.configuration.validating) {
+          if (success) {
+              // redirect to page that records it
+              window.location = "/add/verify.php?id=" + this.configuration.dbId;
+          }
+          return;
+      }
 
     var data = {
       id : this.configuration.dbId,
