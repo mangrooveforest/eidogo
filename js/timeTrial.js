@@ -9,7 +9,7 @@
  * @returns {go.problems.TimeTrial}
  * @author Matias Niklison &lt;matias.niklison@gmail.com&gt;
  */
-go.problems.TimeTrial = function(configuration) {
+go.problems.TimeTrial = function (configuration) {
   this.init(configuration);
 };
 
@@ -18,37 +18,37 @@ go.problems.TimeTrial.prototype = {
   /**
    * Time, in seconds, when the blink starts.
    */
-  BLINK_TIME : 10,
+  BLINK_TIME: 10,
 
   /**
    * The dom elements:
    */
-  dom : null,
+  dom: null,
 
   /**
    * Database's id for the trial.
    */
-  trialId : null,
+  trialId: null,
 
   /**
    * Number of lives left.
    */
-  lives : null,
+  lives: null,
 
   /**
    * Reference to the goproblem application.
    */
-  goproblems : null,
+  goproblems: null,
 
   /**
    * Interval ID for the timer.
    */
-  timerIntervalId : null,
+  timerIntervalId: null,
 
   /**
    * Interval ID for the blink.
    */
-  blinkIntervalId : null,
+  blinkIntervalId: null,
 
   /**
    * Total time to play the exercise, in seconds.
@@ -60,15 +60,21 @@ go.problems.TimeTrial.prototype = {
    */
   gameIsOver: null,
 
+  problemId: null,
+
+  trialResultHandlerURL: null,
+
   /**
    * Constructor.
    * @param configuration
    */
-  init : function(configuration) {
+  init: function (configuration) {
     this.trialId = configuration.trialId;
     this.lives = configuration.lives;
     this.goproblems = configuration.goproblems;
     this.totalTime = configuration.totalTime;
+    this.problemId = configuration.dbId;
+    this.trialResultHandlerURL = configuration.trialResultHandlerURL;
     this.gameIsOver = false;
 
     this.dom = {};
@@ -83,7 +89,7 @@ go.problems.TimeTrial.prototype = {
   /**
    * Creates the dom.
    */
-  createDom : function() {
+  createDom: function () {
     this.dom.container = $(''
         + '<div id="time-trial-container" class="time-trial-container">'
         + '  <h3>Time Trial</h3>'
@@ -99,7 +105,7 @@ go.problems.TimeTrial.prototype = {
         + '      ' + this.getTimeString(this.totalTime)
         + '    </div>'
         + '    <div class="result-message">'
-        + '      <a href="/" style="display: none" class="bigbutton success">Next Problem</a>'
+        + '      <a href="" style="display: none" class="btn btn-success fw-bold success">Next Problem</a>'
         + '      <div class="game-over">'
         + '        Game over'
         + '      </div>'
@@ -122,7 +128,7 @@ go.problems.TimeTrial.prototype = {
    * Returns the dom.
    * @returns
    */
-  getDom : function () {
+  getDom: function () {
     return this.dom.container;
   },
 
@@ -145,7 +151,7 @@ go.problems.TimeTrial.prototype = {
     if (seconds < 10) {
       seconds = "0" + seconds;
     }
-    
+
     return minutes + ":" + seconds;
   },
 
@@ -198,9 +204,10 @@ go.problems.TimeTrial.prototype = {
    * Called when the user loses a life.
    */
   looseLife: function (restartTimer) {
+    this.lives--;
+    this.updateResults(false);
     clearInterval(this.timerIntervalId);
     this.timerIntervalId = null;
-    this.lives--;
     this.dom.livesLeft.find(".live:visible:last").hide();
     if (this.lives === 0) {
       this.gameOver(false);
@@ -215,13 +222,15 @@ go.problems.TimeTrial.prototype = {
    * Called whhen the user finishes the exercise, whether good or bad.
    * @param success
    */
-  endGame: function(success) {
+  endGame: function (success) {
     clearInterval(this.timerIntervalId);
     if (success) {
       this.gameOver(success);
     } else {
       this.looseLife(false);
     }
+
+
   },
 
   /**
@@ -229,9 +238,7 @@ go.problems.TimeTrial.prototype = {
    */
   gameOver: function (success) {
     if (success) {
-        // set next loc URL
-        var vl = ((this.lives * problem_id) << 8) + 91;
-        $('a.success').attr('href', 'prob.php3?id=' + problem_id + '&trialid=' + trial_id + '&vl=' + vl);
+      this.updateResults(success)
       this.dom.success.show();
     } else {
       this.dom.gameOver.show();
@@ -261,14 +268,14 @@ go.problems.TimeTrial.prototype = {
   /**
    * Changes the timer color.
    */
-  blink: function() {
+  blink: function () {
     this.dom.timer.toggleClass("blink");
   },
 
   /**
    * Stops the blinking, if active.
    */
-  stopBlink: function() {
+  stopBlink: function () {
     if (this.blinkIntervalId !== null) {
       clearInterval(this.blinkIntervalId);
       this.blinkIntervalId = null;
@@ -280,8 +287,21 @@ go.problems.TimeTrial.prototype = {
    * Returns the seconds elapsed since the beginning of the exercise,
    * in seconds.
    */
-  currentTime : function () {
-    return parseInt((new Date().getTime() - this.startTime)/1000);
+  currentTime: function () {
+    return parseInt((new Date().getTime() - this.startTime) / 1000);
+  },
+
+  updateResults: function(success) {
+    let self = this;
+    let lives = ((this.lives * this.problemId) << 8) + 91;
+    fetch(self.trialResultHandlerURL,
+        {
+          method: 'POST',
+          body: JSON.stringify({status: success, lives: lives}),
+        }
+    )
+        .catch(function (error) {
+          console.log(error);
+        });
   }
 };
-

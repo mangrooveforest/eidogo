@@ -1,7 +1,7 @@
 
 function tx(s) {
-    if (eidogo.p18n[s]) return eidogo.p18n[s];
-    return s;
+  if (eidogo.p18n[s]) return eidogo.p18n[s];
+  return s;
 }
 
 go.problems.Comments = function(configuration) {
@@ -14,10 +14,10 @@ go.problems.Comments.prototype = {
    * The types of comments with their labels,
    */
   TYPES_OF_COMMENTS : {
-        comment : tx("comment type"),
-        question : tx("question"),
-        correct : tx("correct type"),
-        wrong : tx("wrong type")
+    comment : tx("comment type"),
+    question : tx("question"),
+    correct : tx("correct type"),
+    wrong : tx("wrong type")
   },
 
   /**
@@ -136,7 +136,7 @@ go.problems.Comments.prototype = {
 
     // SHOW DISABLED COMMENTS CHECKBOX
     $('<label class="disabled-comments">' +
-      '<input type="checkbox"/> ' + tx("disabled comments") + '</label>')
+        '<input type="checkbox"/> ' + tx("disabled comments") + '</label>')
         .appendTo(this.dom.commentsContainer).find('input')
         .change(function() {
           var disabledComment = $('#comments-container .comment.disabled');
@@ -170,15 +170,15 @@ go.problems.Comments.prototype = {
    */
   initAddComments : function() {
     $('<from class="add-comment">' +
-      '<span>' + tx("add header") + '</span>' +
+        '<span>' + tx("add header") + '</span>' +
         '<textarea></textarea>' +
         '<div>' +
-          '<select></select>' +
-      '<input type="submit" value="' + tx("submit") + '"/>' +
-          '<div class="loading-image" style="display: none;"/>' +
-          '<input type="hidden" class="path"/>' +
+        '<select></select>' +
+        '<input type="submit" value="' + tx("submit") + '"/>' +
+        '<div class="loading-image" style="display: none;"/>' +
+        '<input type="hidden" class="path"/>' +
         '</div>' +
-      '</form>'
+        '</form>'
     ).appendTo(this.dom.localComments);
 
     var $commentsDropdown = this.dom.localComments.find(".add-comment select");
@@ -275,20 +275,20 @@ go.problems.Comments.prototype = {
       var comment = $('<div class="comment">');
 
       var info = $('<div class="info">').appendTo(comment);
-      
+
       $('<div class="left author">').text(jsonComment.author).appendTo(info);
 
       var entered = $('<div class="right entered">').text(jsonComment.entered).appendTo(info);
       if (jsonComment.genre) {
         entered.addClass(jsonComment.genre);
       }
-      
+
 
       if (jsonComment.strength) {
         $('<div class="right strength">').text("/" + jsonComment.strength)
             .appendTo(info);
       }
-      
+
       if (jsonComment.solveage) {
         $('<div class="right solveage">').text(jsonComment.solveage).appendTo(info);
       }
@@ -309,7 +309,7 @@ go.problems.Comments.prototype = {
       this.pathJsonCommentsMap[jsonComment.path].push(jsonComment);
 
       var goToPositionButton = $(
-                                 '<input type="button" value="' + tx("goto pos") + '" data-path="' +
+          '<input type="button" value="' + tx("goto pos") + '" data-path="' +
           jsonComment.path + '" class="go-to-button">').appendTo(comment);
 
       var self = this;
@@ -338,8 +338,21 @@ go.problems.Comments.prototype = {
 
   requestComments : function (callback) {
     if (this.commentsURL) {
-      var self = this;
-      $.getJSON(this.commentsURL, {
+      const self = this;
+      fetch(this.commentsURL + '?id=' + this.dbId)
+          .then(data => data.json())
+          .then(function (data) {
+            self.requestCommentsCallback(data, callback);
+          })
+          .catch(function() {
+            self.pathCommentsMap = {};
+            self.onCommentsLoaded(self.pathJsonCommentsMap, 0, true);
+            if (callback) {
+              callback(true);
+            }
+          });
+
+      /*$.getJSON(this.commentsURL, {
           id : this.dbId
         }, $.proxy(function(data) {
           this.requestCommentsCallback(data, callback);
@@ -350,6 +363,7 @@ go.problems.Comments.prototype = {
             callback(true);
           }
       });
+       */
     } else {
       this.requestCommentsCallback([], callback);
     }
@@ -388,19 +402,18 @@ go.problems.Comments.prototype = {
         comment : $commentForm.find('textarea').val().trim(),
         genre : $commentForm.find('select').val(),
         path : $commentForm.find('input.path').val()
-        }, function(data) {
-            self.requestComments(function() {
-              $submit.removeAttr('disabled');
-              $loading.hide();
-              self.updateLocalComments();
-            });
-        }).error(function() {
-          go.problems.utils.showMessageDialog("We are sorry but there was a " +
-              "problem saving your comment, please try again later.");
+      }, function(data) {
+        self.requestComments(function() {
           $submit.removeAttr('disabled');
           $loading.hide();
+          self.updateLocalComments();
+        });
+      }).error(function() {
+        go.problems.utils.showMessageDialog("We are sorry but there was a " +
+            "problem saving your comment, please try again later.");
+        $submit.removeAttr('disabled');
+        $loading.hide();
       });
     }
   }
 };
-
