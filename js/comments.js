@@ -1,10 +1,9 @@
-
 function tx(s) {
   if (eidogo.p18n[s]) return eidogo.p18n[s];
   return s;
 }
 
-go.problems.Comments = function(configuration) {
+go.problems.Comments = function (configuration) {
   this.init(configuration);
 };
 
@@ -13,44 +12,44 @@ go.problems.Comments.prototype = {
   /**
    * The types of comments with their labels,
    */
-  TYPES_OF_COMMENTS : {
-    comment : tx("comment type"),
-    question : tx("question"),
-    correct : tx("correct type"),
-    wrong : tx("wrong type")
+  TYPES_OF_COMMENTS: {
+    comment: tx("comment type"),
+    question: tx("question"),
+    correct: tx("correct type"),
+    wrong: tx("wrong type")
   },
 
   /**
    * Default text for the textarea.
    */
-  TEXTAREA_DEFAULT_TEXT : tx("add hint"),
+  TEXTAREA_DEFAULT_TEXT: tx("add hint"),
 
   /**
    * Default text for the textarea when the user is not logged in.
    */
-  TEXTAREA_NO_USER_TEXT : tx("need reg for comments"),
+  TEXTAREA_NO_USER_TEXT: tx("need reg for comments"),
 
   /**
    * Method to be called to go to the comment's path. Never null.
    */
-  goToPath : null,
+  goToPath: null,
 
   /**
    * The URL where the comments are retrieved.
    */
-  commentsURL : null,
+  commentsURL: null,
 
   /**
    * The URL where the comments are posted.
    */
-  postCommentsURL : null,
+  postCommentsURL: null,
 
   /**
    * To be called when the comments are loaded, with a map of the path and the
    * jsonComment as parameter. If the call fails, it will be called with an
    * empty map and a second parameter with 'true' as value.
    */
-  onCommentsLoaded : null,
+  onCommentsLoaded: null,
 
   /**
    * The dom elements:
@@ -58,28 +57,28 @@ go.problems.Comments.prototype = {
    * {
    *   commentsContainer : main container,
    *   localComments : ,
-   *   allComments : 
+   *   allComments :
    * }
    * </p>
    */
-  dom : null,
+  dom: null,
 
   /**
    * Map containing all the comments for a certain path.
    */
-  pathCommentsMap : null,
+  pathCommentsMap: null,
 
   /**
    * The number of comments.
    */
-  numberOfComments : null,
+  numberOfComments: null,
 
   /**
    * The number of active comments.
    */
-  numberOfActiveComments : null,
+  numberOfActiveComments: null,
 
-  init : function(configuration) {
+  init: function (configuration) {
     if (!configuration.goToPath ||
         typeof configuration.goToPath !== "function") {
       throw "The goToPath Method cannot be undefined or null.";
@@ -90,14 +89,14 @@ go.problems.Comments.prototype = {
 
     if (configuration.debugMode) {
       this.commentsURL = "mock/mockComments.json";
-    } else if (!configuration.demoMode){
+    } else if (!configuration.demoMode) {
       if (!configuration.commentsURL) {
         throw "The comments Url cannot be undefined or null.";
       }
       this.commentsURL = configuration.commentsURL;
     }
 
-    if (!configuration.demoMode){
+    if (!configuration.demoMode) {
       this.postCommentsURL = configuration.postCommentsURL;
     }
 
@@ -117,11 +116,11 @@ go.problems.Comments.prototype = {
     this.createDom();
   },
 
-  createDom : function() {
+  createDom: function () {
     this.dom.commentsContainer = $("<div>");
     this.dom.commentsContainer.attr({
-      id : 'comments-container',
-      'class' : 'comments-container'
+      id: 'comments-container',
+      'class': 'comments-container'
     });
 
     // TABS
@@ -138,9 +137,9 @@ go.problems.Comments.prototype = {
     $('<label class="disabled-comments">' +
         '<input type="checkbox"/> ' + tx("disabled comments") + '</label>')
         .appendTo(this.dom.commentsContainer).find('input')
-        .change(function() {
+        .change(function () {
           var disabledComment = $('#comments-container .comment.disabled');
-          if(this.checked) {
+          if (this.checked) {
             disabledComment.show();
           } else {
             disabledComment.hide();
@@ -168,7 +167,7 @@ go.problems.Comments.prototype = {
   /**
    * Initialices the add comments section.
    */
-  initAddComments : function() {
+  initAddComments: function () {
     $('<from class="add-comment">' +
         '<span>' + tx("add header") + '</span>' +
         '<textarea></textarea>' +
@@ -204,7 +203,7 @@ go.problems.Comments.prototype = {
 
   },
 
-  getDom : function () {
+  getDom: function () {
     return this.dom.commentsContainer;
   },
 
@@ -214,11 +213,11 @@ go.problems.Comments.prototype = {
    * @param path {String} The path of the local comment to be shown. If not
    *     specified no comments will be added or removed.
    */
-  showLocalComments : function (path) {
+  showLocalComments: function (path) {
     this.dom.allCommentsTab.removeClass("selected");
     this.dom.allComments.hide();
 
-    if (typeof(path) == 'string') {
+    if (typeof (path) == 'string') {
       this.updateLocalComments(path);
     }
 
@@ -229,7 +228,7 @@ go.problems.Comments.prototype = {
   /**
    * Shows the all the comments, hidding the other section.
    */
-  showAllComments : function () {
+  showAllComments: function () {
     this.dom.localCommentsTab.removeClass("selected");
     this.dom.localComments.hide();
 
@@ -242,8 +241,8 @@ go.problems.Comments.prototype = {
    * @param path The path of the comment, if null or undefined the last path
    *     will be used-
    */
-  updateLocalComments : function (path) {
-    if (typeof(path) == 'string') {
+  updateLocalComments: function (path) {
+    if (typeof (path) == 'string') {
       this.currentPath = path;
     }
 
@@ -261,11 +260,11 @@ go.problems.Comments.prototype = {
   /**
    * Populates the comments.
    */
-  populate : function(jsonComments) {
+  populate: function (jsonComments) {
     this.pathCommentsMap = {};
     this.pathJsonCommentsMap = {};
 
-    for (var i=0, len=jsonComments.length; i<len; i++) {
+    for (var i = 0, len = jsonComments.length; i < len; i++) {
       var jsonComment = jsonComments[i];
 
       if (!this.jsoncommentIsValid(jsonComment)) {
@@ -313,7 +312,7 @@ go.problems.Comments.prototype = {
           jsonComment.path + '" class="go-to-button">').appendTo(comment);
 
       var self = this;
-      goToPositionButton.click (function (event) {
+      goToPositionButton.click(function (event) {
         self.goToPath($(event.target).attr("data-path"));
       });
 
@@ -327,7 +326,7 @@ go.problems.Comments.prototype = {
    * @param jsonComment {Object} The json comment to validate.
    * @return Returns false if a json comment is invalid, true otherwise.
    */
-  jsoncommentIsValid : function(jsonComment) {
+  jsoncommentIsValid: function (jsonComment) {
     if (!jsonComment || jsonComment.author == null ||
         jsonComment.entered == null || jsonComment.text == null) {
       return false;
@@ -336,15 +335,16 @@ go.problems.Comments.prototype = {
     }
   },
 
-  requestComments : function (callback) {
+  requestComments: function (callback) {
+
     if (this.commentsURL) {
       const self = this;
       fetch(this.commentsURL + '?id=' + this.dbId)
           .then(data => data.json())
           .then(function (data) {
-            self.requestCommentsCallback(data, callback);
+            self.requestCommentsCallback([], callback);
           })
-          .catch(function() {
+          .catch(function () {
             self.pathCommentsMap = {};
             self.onCommentsLoaded(self.pathJsonCommentsMap, 0, true);
             if (callback) {
@@ -352,24 +352,23 @@ go.problems.Comments.prototype = {
             }
           });
 
-      /*$.getJSON(this.commentsURL, {
-          id : this.dbId
-        }, $.proxy(function(data) {
-          this.requestCommentsCallback(data, callback);
-        }, this)).error(function() {
-          self.pathCommentsMap = {};
-          self.onCommentsLoaded(self.pathJsonCommentsMap, 0, true);
-          if (callback) {
-            callback(true);
-          }
-      });
-       */
-    } else {
-      this.requestCommentsCallback([], callback);
+      fetch(this.commentsURL + '?id=' + this.dbId)
+          .then(data => data.json())
+          .then(function (data) {
+            self.requestCommentsCallback(data, callback);
+          })
+          .catch(function () {
+            self.pathCommentsMap = {};
+            self.onCommentsLoaded(self.pathJsonCommentsMap, 0, true);
+            if (callback) {
+              callback(true);
+            }
+          });
     }
   },
 
-  requestCommentsCallback: function(data, callback) {
+  requestCommentsCallback: function (data, callback) {
+    console.log(data);
     this.numberOfComments = data.length;
     this.numberOfActiveComments = data.length;
     this.populate(data);
@@ -380,9 +379,10 @@ go.problems.Comments.prototype = {
     if (callback) {
       callback();
     }
-  },
+  }
+  ,
 
-  sendComment : function (theEvent) {
+  sendComment: function (theEvent) {
     var self = this;
     var $submit = $(theEvent.currentTarget);
     var $commentForm = $(theEvent.currentTarget).parent().parent();
@@ -397,18 +397,18 @@ go.problems.Comments.prototype = {
     $loading.show();
     if (this.postCommentsURL) {
       $.post(this.postCommentsURL, {
-        prob : this.dbId,
-        authorid : this.userId,
-        comment : $commentForm.find('textarea').val().trim(),
-        genre : $commentForm.find('select').val(),
-        path : $commentForm.find('input.path').val()
-      }, function(data) {
-        self.requestComments(function() {
+        prob: this.dbId,
+        authorid: this.userId,
+        comment: $commentForm.find('textarea').val().trim(),
+        genre: $commentForm.find('select').val(),
+        path: $commentForm.find('input.path').val()
+      }, function (data) {
+        self.requestComments(function () {
           $submit.removeAttr('disabled');
           $loading.hide();
           self.updateLocalComments();
         });
-      }).error(function() {
+      }).fail(function () {
         go.problems.utils.showMessageDialog("We are sorry but there was a " +
             "problem saving your comment, please try again later.");
         $submit.removeAttr('disabled');
