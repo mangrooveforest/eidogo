@@ -52,11 +52,11 @@
 }
 
 .eidogo-player .controls .to-move span.black {
-  background: url("../images/stones.png") no-repeat 0 0;
+	background: url("../images/stones.png") no-repeat 0 0;
 }
 
 .eidogo-player .controls .to-move span.white {
-  background: url("../images/stones.png") no-repeat 0 -19px;
+	background: url("../images/stones.png") no-repeat 0 -19px;
 }
 
 .eidogo-player .options a {
@@ -348,17 +348,17 @@
 }
 
 .eidogo-player .terminate-right {
-  background: #afa;
-  font-weight: bold;
-  padding: 4px;
-  border: 1px solid #44AA44;
+background: #afa;
+font-weight: bold;
+padding: 4px;
+border: 1px solid #44AA44;
 }
 
 .eidogo-player .terminate-wrong {
-  background: #faa;
-  font-weight: bold;
-  padding: 4px;
-  border: 1px solid #a44;
+background: #faa;
+font-weight: bold;
+padding: 4px;
+border: 1px solid #a44;
 }
 
 .eidogo-player .to-move li {

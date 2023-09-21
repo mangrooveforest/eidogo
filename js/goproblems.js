@@ -239,6 +239,7 @@ go.problems.Player.prototype = {
    * @param numberOfComments The number of comments.
    */
   setNumberOfComments : function (numberOfComments) {
+    console.log('set');
     this.showResultsLi.find('#number-of-comments').text(numberOfComments);
   },
   /**
@@ -307,6 +308,7 @@ go.problems.Player.prototype = {
    * Disables the solution button, if the user has not seen this problem before.
    */
   disableSolutionButton : function() {
+    return;
     if (!this.configuration.seenbefore) {
       this.showResultsLi.find("button").attr("disabled","disabled");
     }
