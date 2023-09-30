@@ -40,7 +40,8 @@
   color: black;
   text-indent: 4px;
   line-height: 17px;
-  font-size: 12px; 
+  font-size: 12px;
+  box-sizing: content-box;
 }
 
 .eidogo-player .controls .to-move span {
@@ -358,4 +359,8 @@ background: #faa;
 font-weight: bold;
 padding: 4px;
 border: 1px solid #a44;
+}
+
+.eidogo-player .to-move li {
+  box-sizing: content-box;
 }

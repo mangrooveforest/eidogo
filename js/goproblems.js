@@ -6,13 +6,13 @@ go = {};
 go.problems = {};
 
 function tx(s) {
-    if (eidogo.p18n[s]) return eidogo.p18n[s];
-    return s;
+  if (eidogo.p18n[s]) return eidogo.p18n[s];
+  return s;
 }
 
 /**
  * Go Problem's consturctor.
- * 
+ *
  * @param containerId {String} Id of the dom element that will contain the
  *    player. Its innerHTML must be the sgf configuration. Cannot be empty or
  *    null.
@@ -50,7 +50,7 @@ go.problems.Player.prototype = {
    * variables.
    */
   configuration : null,
-  
+
   /**
    * The callback function, can be undefined or null.
    */
@@ -149,13 +149,13 @@ go.problems.Player.prototype = {
 
     /* 'To move' panel. */
     $(this.player.dom.controls)
-    .append('<li class="to-move"><span></span> ' + tx('tomove') + '</li>');
+        .append('<li class="to-move"><span></span> ' + tx('tomove') + '</li>');
 
     /* Show result button */
     var showResultsButton = $('<button />');
     this.showResultsLi = $('<li class="show-solution" />')
         .append(showResultsButton.html(
-                                       tx("solution") + ' (<span id="number-of-comments"></span>)'))
+            tx("solution") + ' (<span id="number-of-comments"></span>)'))
         .appendTo($(this.player.dom.controls));
     this.disableSolutionButton();
 
@@ -175,11 +175,12 @@ go.problems.Player.prototype = {
         trialId: this.configuration.trialId,
         lives: this.configuration.lives || 5,
         goproblems: this,
-        totalTime: this.configuration.totalTime || 60
+        totalTime: this.configuration.totalTime || 60,
+        trialResultHandlerURL: this.configuration.trialResultHandlerURL,
       });
 
       this.commentsContainer = $('<div class="column time-trial">')
-        .append(this.timeTrial.getDom()).prependTo($(this.player.dom.player));
+          .append(this.timeTrial.getDom()).prependTo($(this.player.dom.player));
     }
 
     this.player.loadSgf(this.cfg, this.onSgfLoaded.bind(this));
@@ -188,7 +189,7 @@ go.problems.Player.prototype = {
   onSgfLoaded: function () {
     this.initComments();
     if (this.configuration.trialId) {
-        this.timeTrial.startTimer();
+      this.timeTrial.startTimer();
     }
   },
 
@@ -209,7 +210,7 @@ go.problems.Player.prototype = {
 
     this.commentsContainer = $('<div style="display:none;">')
         .append(this.comments.getDom()).appendTo($(this.player.dom.comments)
-        .parent());
+            .parent());
   },
 
   /**
@@ -219,9 +220,9 @@ go.problems.Player.prototype = {
    *     moves, as keys. An array of json comments as keys.
    * @param numberOfActiveComments {Number} The number of active comments.
    * @param hasFailed {Boolean} True if the loading of external comments failed.
-   */  
+   */
   onCommentsLoaded : function (thePathJsonCommentsMap, numberOfActiveComments,
-      hasFailed) {
+                               hasFailed) {
     this.loadExternalMoves(thePathJsonCommentsMap, hasFailed);
     this.setNumberOfComments(numberOfActiveComments || 0);
 
@@ -238,9 +239,10 @@ go.problems.Player.prototype = {
    * @param numberOfComments The number of comments.
    */
   setNumberOfComments : function (numberOfComments) {
+    console.log('set');
     this.showResultsLi.find('#number-of-comments').text(numberOfComments);
   },
-   /**
+  /**
    * Validate goproblem's configuration.
    */
   validateConfiguration : function () {
@@ -306,6 +308,7 @@ go.problems.Player.prototype = {
    * Disables the solution button, if the user has not seen this problem before.
    */
   disableSolutionButton : function() {
+    return;
     if (!this.configuration.seenbefore) {
       this.showResultsLi.find("button").attr("disabled","disabled");
     }
@@ -374,20 +377,20 @@ go.problems.Player.prototype = {
    * Sends the result of the problem to the server.
    */
   sendResult2Server : function (success, hardstop, cursor) {
-        if (false) {
-            // by default, send anon results to the server
-            if (!this.configuration.userId) {
-                // The user is not logged in.
-                return;
-            }
-        }
-      if (this.configuration.validating) {
-          if (success) {
-              // redirect to page that records it
-              window.location = "/add/verify.php?id=" + this.configuration.dbId;
-          }
-          return;
+    if (false) {
+      // by default, send anon results to the server
+      if (!this.configuration.userId) {
+        // The user is not logged in.
+        return;
       }
+    }
+    if (this.configuration.validating) {
+      if (success) {
+        // redirect to page that records it
+        window.location = "/add/verify.php?id=" + this.configuration.dbId;
+      }
+      return;
+    }
 
     var data = {
       id : this.configuration.dbId,
@@ -405,14 +408,14 @@ go.problems.Player.prototype = {
     }
 
     if (!this.configuration.debugMode && !this.configuration.demoMode) {
-      $.post("solve.php3", data, function(data, textStatus){
+      $.post("/solve.php3", data, function(data, textStatus){
         if (textStatus !== "success") {
           go.problems.utils.showMessageDialog("There was an error saving the " +
               "result of the exercise to the server!");
         }
       });
       if (typeof ga != "undefined")
-          ga('send', 'event', 'Problem', 'Solve', (success? 1 : 0), this.configuration.dbId);
+        ga('send', 'event', 'Problem', 'Solve', (success? 1 : 0), this.configuration.dbId);
     } else if (!this.configuration.demoMode) {
       var url = window.location.host + "\n Params:\n";
 
@@ -426,7 +429,7 @@ go.problems.Player.prototype = {
       go.problems.utils.showMessageDialog("POST to:" + url);
     }
   },
-  
+
   /**
    * Loads the moves that were added in the comments by external users.
    *
@@ -441,7 +444,7 @@ go.problems.Player.prototype = {
 
     var root = this.player.cursor.getGameRoot();
     var cursor = new eidogo.GameCursor(root);
-    
+
     var paths = go.problems.utils.getKeys(thePathJsonCommentsMap);
     for (var i = 0, len = paths.length; i < len; i++) {
       cursor.init(root);
@@ -455,7 +458,7 @@ go.problems.Player.prototype = {
       }
       currentPath += move;
       if (currentPath === path) {
-       // The node has thePathJsonCommentsMap[path].length comments
+        // The node has thePathJsonCommentsMap[path].length comments
         cursor.node.increaseExternalCommentCount(
             thePathJsonCommentsMap[paths[i]].length);
       }
@@ -505,9 +508,9 @@ go.problems.Player.prototype = {
           }
           if (currentPath === path) {
             // The node has thePathJsonCommentsMap[path].length comments
-             node.increaseExternalCommentCount(
-                 thePathJsonCommentsMap[paths[i]].length);
-           }
+            node.increaseExternalCommentCount(
+                thePathJsonCommentsMap[paths[i]].length);
+          }
           break;
         }
       }
@@ -517,14 +520,14 @@ go.problems.Player.prototype = {
   /*-----HOOKS------------*/
   playProblemResponse : function () {
     if (this.player.cursor.node.isOffPath()) {
-        this.player.prependComment(tx('off path') + "\n", "terminate-wrong");
+      this.player.prependComment(tx('off path') + "\n", "terminate-wrong");
     }
     if (!this.player.cursor.hasNext() || this.player.cursor.getNext().commentType) {
       if (this.player.cursor.node.goproblems
           && this.player.cursor.node.goproblems.right) {
-          this.player.prependComment(tx('solved') + "\n", "terminate-right");
+        this.player.prependComment(tx('solved') + "\n", "terminate-right");
       } else {
-          this.player.prependComment(tx('wrong') + "\n", "terminate-wrong");
+        this.player.prependComment(tx('wrong') + "\n", "terminate-wrong");
       }
       this.enableSolutionButton();
     }
@@ -532,15 +535,15 @@ go.problems.Player.prototype = {
   showComments : function (params) {
     var comments = params.comments;
     if ($.isArray(comments)) {
-        if (this.configuration.ptrans) {
-            var pt = this.configuration.ptrans;
-            for (var i = 0; i < comments.length; i++) {
-                var c = comments[i];
-                if (pt[c])
-                    comments[i] = pt[c];
-            }
+      if (this.configuration.ptrans) {
+        var pt = this.configuration.ptrans;
+        for (var i = 0; i < comments.length; i++) {
+          var c = comments[i];
+          if (pt[c])
+            comments[i] = pt[c];
         }
-        comments = comments.join("<br/>");
+      }
+      comments = comments.join("<br/>");
     }
     this.player.dom.comments.innerHTML += comments.replace(/^(\n|\r|\t|\s)+/, "")
         .replace(/\n/g, "<br />");
@@ -606,14 +609,14 @@ go.problems.Player.prototype = {
         }
       } else {
         // end of the problem
-          if (this.configuration.trialId) {
-              this.timeTrial.endGame(this.player.cursor.node.success);
-          }
-          if (this.hardstop !== 1) {
-              this.hardstop = 1;
-              this.sendResult2Server(this.player.cursor.node.success, this.hardstop,
-                                     this.player.cursor);
-          }
+        if (this.configuration.trialId) {
+          this.timeTrial.endGame(this.player.cursor.node.success);
+        }
+        if (this.hardstop !== 1) {
+          this.hardstop = 1;
+          this.sendResult2Server(this.player.cursor.node.success, this.hardstop,
+              this.player.cursor);
+        }
       }
     }
   },
@@ -645,7 +648,7 @@ go.problems.utils = {
   isValidId : function (theId) {
     return theId && !isNaN(theId);
   },
-  
+
   /**
    * Returns the list of keys of an object.
    */
@@ -672,8 +675,8 @@ go.problems.utils = {
   addDefaultValue : function (input){
     input.focus(function() {
       if ($(this).val().trim() === $(this)[0].title) {
-          $(this).removeClass("default-text");
-          $(this).val("");
+        $(this).removeClass("default-text");
+        $(this).val("");
       }
     });
     input.blur(function() {
@@ -686,4 +689,3 @@ go.problems.utils = {
     input.blur();
   }
 };
-
