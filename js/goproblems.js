@@ -239,7 +239,6 @@ go.problems.Player.prototype = {
    * @param numberOfComments The number of comments.
    */
   setNumberOfComments : function (numberOfComments) {
-    console.log('set');
     this.showResultsLi.find('#number-of-comments').text(numberOfComments);
   },
   /**
