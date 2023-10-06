@@ -356,7 +356,7 @@ eidogo.RaphaelNavTree.prototype = {
     var $columns = $player.children(".column");
     var maxWidth = $player.width();
     $columns.each(function(index, element) {
-      if ($(element).children(navTreeContainerId).size() === 0) { 
+      if ($(element).children(navTreeContainerId).length === 0) {
         maxWidth -= $(element).outerWidth(true);
       } else {
         maxWidth -= ($(element).outerWidth(true) - $(element).width());

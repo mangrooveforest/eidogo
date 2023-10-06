@@ -342,19 +342,6 @@ go.problems.Comments.prototype = {
             fetch(this.commentsURL + '?id=' + this.dbId)
                 .then(data => data.json())
                 .then(function (data) {
-                    self.requestCommentsCallback([], callback);
-                })
-                .catch(function () {
-                    self.pathCommentsMap = {};
-                    self.onCommentsLoaded(self.pathJsonCommentsMap, 0, true);
-                    if (callback) {
-                        callback(true);
-                    }
-                });
-
-            fetch(this.commentsURL + '?id=' + this.dbId)
-                .then(data => data.json())
-                .then(function (data) {
                     self.requestCommentsCallback(data, callback);
                 })
                 .catch(function () {
@@ -368,7 +355,6 @@ go.problems.Comments.prototype = {
     },
 
     requestCommentsCallback: function (data, callback) {
-        console.log(data);
         this.numberOfComments = data.length;
         this.numberOfActiveComments = data.length;
         this.populate(data);
