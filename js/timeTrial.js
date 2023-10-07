@@ -105,7 +105,6 @@ go.problems.TimeTrial.prototype = {
         + '      ' + this.getTimeString(this.totalTime)
         + '    </div>'
         + '    <div class="result-message">'
-        + '      <a href="" style="display: none" class="btn btn-success fw-bold success">Next Problem</a>'
         + '      <div class="game-over">'
         + '        Game over'
         + '      </div>'
@@ -240,6 +239,7 @@ go.problems.TimeTrial.prototype = {
     if (success) {
       this.updateResults(success)
       this.dom.success.show();
+      document.dispatchEvent(new Event('app_time_trial_passed'));
     } else {
       this.dom.gameOver.show();
     }
