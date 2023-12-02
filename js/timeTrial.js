@@ -228,8 +228,6 @@ go.problems.TimeTrial.prototype = {
     } else {
       this.looseLife(false);
     }
-
-
   },
 
   /**
@@ -237,9 +235,8 @@ go.problems.TimeTrial.prototype = {
    */
   gameOver: function (success) {
     if (success) {
-      this.updateResults(success)
+      this.updateResults(success);
       this.dom.success.show();
-      document.dispatchEvent(new Event('app_time_trial_passed'));
     } else {
       this.dom.gameOver.show();
     }
@@ -291,7 +288,7 @@ go.problems.TimeTrial.prototype = {
     return parseInt((new Date().getTime() - this.startTime) / 1000);
   },
 
-  updateResults: function(success) {
+  updateResults: function (success) {
     let self = this;
     let lives = ((this.lives * this.problemId) << 8) + 91;
     fetch(self.trialResultHandlerURL,
@@ -300,6 +297,19 @@ go.problems.TimeTrial.prototype = {
           body: JSON.stringify({status: success, lives: lives}),
         }
     )
+        .then(data => data.json())
+        .then(function (data) {
+          if (!data.active) {
+            document.dispatchEvent(new CustomEvent('app_time_trial_finished', {
+              detail: {
+                id: data.id,
+                solved: data.solved
+              }
+            }));
+          } else if (data.lastProblemSolved && data.active) {
+            document.dispatchEvent(new Event('app_time_trial_passed'));
+          }
+        })
         .catch(function (error) {
           console.log(error);
         });
