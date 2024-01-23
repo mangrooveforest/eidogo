@@ -425,7 +425,7 @@ go.problems.Player.prototype = {
       data.lives = this.timeTrial.getLives();
     }
     if (this.configuration.eventsEnabled) {
-      window.dispatchEvent(new CustomEvent('goproblems_player.result', {detail: data}));
+      document.dispatchEvent(new CustomEvent('goproblems_player.result', {detail: data}));
     }
 
     if (this.configuration.sendingResultsDisabled) {
