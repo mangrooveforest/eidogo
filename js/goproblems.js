@@ -652,6 +652,9 @@ go.problems.Player.prototype = {
     var stone = $(this.player.dom.controls).find(".to-move span");
     stone.removeClass();
     stone.addClass(this.player.cursor.getNextColor() === "B"? "black":"white");
+    if (this.configuration.eventsEnabled) {
+      document.dispatchEvent(new CustomEvent('goproblems_player.stone_color_changed', {'detail': this.player.cursor.getNextColor()}));
+    }
 
     // Saves the current path in the comment container, so it can be saved if
     // the user saves a new comment.
