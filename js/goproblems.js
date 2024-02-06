@@ -146,29 +146,37 @@ go.problems.Player.prototype = {
     $(this.player.dom.navSlider).remove();
     $(this.player.dom.variationsContainer).remove();
     $(this.player.dom.moveNumber).remove();
+    if (this.configuration.controlsDisabled) {
+      $(this.player.dom.controlFirst).remove();
+      $(this.player.dom.controlBack).remove();
+    }
 
     /* 'To move' panel. */
     $(this.player.dom.controls)
         .append('<li class="to-move"><span></span> ' + tx('tomove') + '</li>');
 
     /* Show result button */
-    var showResultsButton = $('<button />');
-    this.showResultsLi = $('<li class="show-solution" />')
-        .append(showResultsButton.html(
-            tx("solution") + ' (<span id="number-of-comments"></span>)'))
-        .appendTo($(this.player.dom.controls));
-    this.disableSolutionButton();
+    if (!this.configuration.commentsDisabled) {
+      var showResultsButton = $('<button />');
+      this.showResultsLi = $('<li class="show-solution" />')
+          .append(showResultsButton.html(
+              tx("solution") + ' (<span id="number-of-comments"></span>)'))
+          .appendTo($(this.player.dom.controls));
+      this.disableSolutionButton();
 
-    this.showResultsLi.click(function(event) {
-      this.showSolution(event, showResultsButton);
-      event.stopPropagation();
-      return false;
-    }.bind(this));
+      this.showResultsLi.click(function (event) {
+        this.showSolution(event, showResultsButton);
+        event.stopPropagation();
+        return false;
+      }.bind(this));
+    }
 
-    $(this.player.dom.controlFirst).click(function() {
-      this.resetTimer();
-      return false;
-    }.bind(this));
+    if (!this.configuration.controlsDisabled) {
+      $(this.player.dom.controlFirst).click(function () {
+        this.resetTimer();
+        return false;
+      }.bind(this));
+    }
 
     if (this.configuration.trialId) {
       this.timeTrial = new go.problems.TimeTrial({
@@ -187,9 +195,20 @@ go.problems.Player.prototype = {
   },
 
   onSgfLoaded: function () {
-    this.initComments();
+    if (!this.configuration.commentsDisabled) {
+      this.initComments();
+    } else {
+      this.player.show();
+      if (this.callback) {
+        callback();
+      }
+      //}
+    }
     if (this.configuration.trialId) {
       this.timeTrial.startTimer();
+    }
+    if (this.configuration.eventsEnabled) {
+      document.dispatchEvent(new CustomEvent('goproblems_player.sgf_loaded'));
     }
   },
 
@@ -405,6 +424,13 @@ go.problems.Player.prototype = {
       data.trialid = this.configuration.trialId;
       data.lives = this.timeTrial.getLives();
     }
+    if (this.configuration.eventsEnabled) {
+      document.dispatchEvent(new CustomEvent('goproblems_player.result', {detail: data}));
+    }
+
+    if (this.configuration.sendingResultsDisabled) {
+      return;
+    }
 
     if (!this.configuration.debugMode && !this.configuration.demoMode) {
       $.post("/solve.php3", data, function(data, textStatus){
@@ -528,7 +554,9 @@ go.problems.Player.prototype = {
       } else {
         this.player.prependComment(tx('wrong') + "\n", "terminate-wrong");
       }
-      this.enableSolutionButton();
+      if(!this.configuration.commentsDisabled) {
+        this.enableSolutionButton();
+      }
     }
   },
   showComments : function (params) {
@@ -624,6 +652,9 @@ go.problems.Player.prototype = {
     var stone = $(this.player.dom.controls).find(".to-move span");
     stone.removeClass();
     stone.addClass(this.player.cursor.getNextColor() === "B"? "black":"white");
+    if (this.configuration.eventsEnabled) {
+      document.dispatchEvent(new CustomEvent('goproblems_player.stone_color_changed', {'detail': this.player.cursor.getNextColor()}));
+    }
 
     // Saves the current path in the comment container, so it can be saved if
     // the user saves a new comment.
@@ -633,7 +664,9 @@ go.problems.Player.prototype = {
     }
   },
   beforeShowNavTreeCurrent : function (params) {
-    this.comments.showLocalComments(this.generatePath(this.player.cursor));
+    if (!this.configuration.commentsDisabled) {
+      this.comments.showLocalComments(this.generatePath(this.player.cursor));
+    }
   }
   /*-----------------------*/
 };
