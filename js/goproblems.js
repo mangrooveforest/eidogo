@@ -174,6 +174,12 @@ go.problems.Player.prototype = {
     if (!this.configuration.controlsDisabled) {
       $(this.player.dom.controlFirst).click(function () {
         this.resetTimer();
+        if (this.configuration.resetHardstopOnProblemReset) {
+          this.hardstop = null;
+        }
+        if (this.configuration.eventsEnabled) {
+          document.dispatchEvent(new CustomEvent('goproblems_player.controls.on_problem_reset'));
+        }
         return false;
       }.bind(this));
     }
