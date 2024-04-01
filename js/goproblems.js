@@ -332,7 +332,7 @@ go.problems.Player.prototype = {
    * Disables the solution button, if the user has not seen this problem before.
    */
   disableSolutionButton : function() {
-    return;
+    //return;
     if (!this.configuration.seenbefore) {
       this.showResultsLi.find("button").attr("disabled","disabled");
     }
