@@ -293,7 +293,7 @@ go.problems.Comments.prototype = {
             }
 
             var text = $('<div class="text">').text(jsonComment.text).appendTo(comment);
-            if (jsonComment.alive != '1') {
+            if (!jsonComment.alive) {
                 text.addClass("not-alive");
                 comment.addClass("disabled");
                 comment.hide();
