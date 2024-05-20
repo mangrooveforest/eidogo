@@ -17,6 +17,7 @@ function tx(s) {
  *    player. Its innerHTML must be the sgf configuration. Cannot be empty or
  *    null.
  * @param configuration {Object} goproblem's configuration.
+ * @param configuration.postProblemSolvedURL {String} The url to save the problem solve results.
  * @param configuration.commentsURL {String} The url to retrieve the problem
  *   comments. Mandatory.
  * @param configuration.dbId {Integer} The id of the problem, mandatory.
@@ -417,13 +418,10 @@ go.problems.Player.prototype = {
     }
 
     var data = {
-      id : this.configuration.dbId,
-      solved : (success? 1 : 0),
-      userid : this.configuration.userId,
-      hardstop : hardstop,
-      secs : this.currentTime(),
-      path : this.generatePath(cursor),
-      player : 'js'
+      solved : success,
+      hardStop : hardstop === 1,
+      solveTime : this.currentTime(),
+      path : this.generatePath(cursor)
     };
 
     if (this.configuration.trialId) {
@@ -439,12 +437,17 @@ go.problems.Player.prototype = {
     }
 
     if (!this.configuration.debugMode && !this.configuration.demoMode) {
-      $.post("/solve.php3", data, function(data, textStatus){
-        if (textStatus !== "success") {
-          go.problems.utils.showMessageDialog("There was an error saving the " +
-              "result of the exercise to the server!");
-        }
-      });
+      fetch(this.configuration.postProblemSolvedURL,
+          {
+            method: 'POST',
+            body: JSON.stringify(data),
+          }
+      )
+          .catch(function (error) {
+            go.problems.utils.showMessageDialog("There was an error saving the result of the exercise to the server!");
+            console.error(error);
+          });
+
       if (typeof ga != "undefined")
         ga('send', 'event', 'Problem', 'Solve', (success? 1 : 0), this.configuration.dbId);
     } else if (!this.configuration.demoMode) {
