@@ -440,6 +440,9 @@ go.problems.Player.prototype = {
       fetch(this.configuration.postProblemSolvedURL,
           {
             method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
             body: JSON.stringify(data),
           }
       )
