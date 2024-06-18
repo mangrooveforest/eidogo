@@ -418,7 +418,7 @@ go.problems.Player.prototype = {
     }
 
     var data = {
-      solved : success,
+      solved : !!success,
       hardStop : hardstop === 1,
       solveTime : this.currentTime(),
       path : this.generatePath(cursor)
